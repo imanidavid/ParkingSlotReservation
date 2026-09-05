@@ -1,0 +1,104 @@
+/* External CSS file - style.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+.form-group input,
+.form-group select {
+    width: 300px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    padding: 8px 15px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.add-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.reserve-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.cancel-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.table th {
+    background-color: #333;
+    color: white;
+}
+
+.available-row td {
+    background-color: #d4edda;
+}
+
+.reserved-row td {
+    background-color: #fff3cd;
+
+}
+
+.occupied-row td {
+    background-color: #f8d7da;
+}
+
+.messages {
+    list-style: none;
+    padding: 0;
+}
+
+.msgInfo {
+    color: #1a7f37;
+    font-weight: bold;
+}
+
+.msgWarn {
+    color: #b26a00;
+    font-weight: bold;
+}
+
+.msgError, .msgFatal {
+    color: #d1242f;
+    font-weight: bold;
+}

@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+<h:head>
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="css/style.css"/>
+    <style type="text/css">
+        .reserve-btn { background-color: #007bff; color: white; padding: 8px 15px; border: none; cursor: pointer; }
+        .cancel-btn { background-color: #dc3545; color: white; padding: 8px 15px; border: none; cursor: pointer; }
+        .save-btn { background-color: #28a745; color: white; padding: 8px 15px; border: none; cursor: pointer; }
+        .reservation-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .reservation-table th, .reservation-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .reservation-table th { background-color: #333; color: white; }
+        .status-available { color: green; }
+        .status-reserved { color: orange; }
+        .status-occupied { color: red; }
+        .status-confirmed { color: green; }
+        .status-pending { color: orange; }
+        .status-cancelled { color: red; }
+    </style>
+</h:head>
+<f:view>
+    <h1>User Dashboard</h1>
+
+    <h:form id="logoutForm">
+        <h:outputText value="Welcome, #{userController.currentUser.fullName}!"
+                      rendered="#{not empty userController.currentUser.fullName}"
+                      style="color: #555; font-size: 16px;"/>
+        <h:commandButton value="Logout"
+                         action="#{userController.logout()}"
+                         style="float: right; background: #dc3545; color: white; padding: 6px 14px; border: none; cursor: pointer; border-radius: 3px;"/>
+    </h:form>
+    <div style="clear: both;"></div>
+
+    <h:messages globalOnly="true" styleClass="messages" style="font-size: 14px;"/>
+
+    <h:form id="reserveForm">
+        <!-- External CSS linked in head -->
+        <!-- Internal CSS applied via style block in head -->
+        <!-- Inline CSS applied on components -->
+
+        <h2>Reserve a Parking Slot</h2>
+
+        <h:panelGrid columns="3" style="border: 1px solid #ddd; padding: 20px;">
+
+            <h:outputLabel value="Slot:" style="color: #333; font-weight: bold;"/>
+            <h:selectOneMenu id="slot" value="#{reservationController.newReservation.slot.slotId}"
+                             style="width: 200px; padding: 5px; border: 1px solid #ccc;">
+                <f:selectItems value="#{reservationController.availableSlots}"/>
+            </h:selectOneMenu>
+            <h:message style="color:red;" for="slot"/>
+
+            <h:outputLabel value="Vehicle Plate:" style="color: #333; font-weight: bold; margin-top: 10px;"/>
+            <h:inputText id="vehiclePlate" value="#{reservationController.newReservation.vehiclePlate}"
+                         required="true"
+                         style="width: 200px; padding: 5px; border: 1px solid #ccc; margin-top: 5px;"
+                         label="Vehicle Plate">
+                <f:validateLength minimum="2" maximum="20"/>
+            </h:inputText>
+            <h:message style="color:red;" for="vehiclePlate"/>
+
+            <h:outputLabel value="Start Time:" style="color: #333; font-weight: bold; margin-top: 10px;"/>
+            <h:inputText id="startTime" value="#{reservationController.newReservation.startTime}"
+                         required="true"
+                         style="width: 200px; padding: 5px; border: 1px solid #ccc; margin-top: 5px;"
+                         label="Start Date">
+                <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+            </h:inputText>
+            <h:message style="color:red;" for="startTime"/>
+
+            <h:outputLabel value="End Time:" style="color: #333; font-weight: bold; margin-top: 10px;"/>
+            <h:inputText id="endTime" value="#{reservationController.newReservation.endTime}"
+                         required="true"
+                         style="width: 200px; padding: 5px; border: 1px solid #ccc; margin-top: 5px;"
+                         label="End Date">
+                <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+            </h:inputText>
+            <h:message style="color:red;" for="endTime"/>
+
+            <h:commandButton value="Reserve Slot"
+                             style="background: #007bff; color: white; padding: 8px 15px; border: none; cursor: pointer; margin-top: 15px;"
+                             action="#{reservationController.reserveSlot()}"/>
+            <br/><br/>
+
+            <h:outputText value="Instructions:" style="font-size: 12px; color: #666; margin-top: 20px; display: block;"/>
+            <ol style="font-size: 12px; color: #555;">
+                <li>Select an available slot</li>
+                <li>Enter valid start and end times</li>
+                <li>Ensure no overlapping reservations</li>
+            </ol>
+        </h:panelGrid>
+    </h:form>
+
+    <h:form id="reservationTableForm">
+        <h2>Your Reservations</h2>
+
+        <h:dataTable value="#{reservationController.getReservationsByUser(userController.currentUser)}"
+                     var="res" border="1" style="width: 100%; margin-top: 20px;"
+                     class="reservation-table">
+            <h:column>
+                <f:facet name="header">Slot</f:facet>
+                #{res.slot.slotNumber}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Location</f:facet>
+                #{res.slot.location}
+            </h:column>
+            <h:column>
+                <f:facet name="header">Start Time</f:facet>
+                <h:outputText value="#{res.startTime}">
+                    <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                </h:outputText>
+            </h:column>
+            <h:column>
+                <f:facet name="header">End Time</f:facet>
+                <h:outputText value="#{res.endTime}">
+                    <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                </h:outputText>
+            </h:column>
+            <h:column>
+                <f:facet name="header">Status</f:facet>
+                <h:outputText value="#{res.status}" class="status-#{empty res.status ? 'pending' : res.status.toLowerCase()}"/>
+            </h:column>
+            <h:column>
+                <f:facet name="header">Actions</f:facet>
+                <h:commandLink id="rescheduleLink" value="Reschedule"
+                               style="color: #007bff; margin-right: 5px;"
+                               action="#{reservationController.prepareUpdateReservation(res.reservationId)}"/>
+                <h:commandLink id="cancelLink" value="Cancel"
+                               styleClass="cancel-btn"
+                               onclick="return confirm('Are you sure you want to cancel this reservation?')"
+                               action="#{reservationController.cancelReservation(res.reservationId)}"/>
+            </h:column>
+        </h:dataTable>
+    </h:form>
+
+    <h:form id="rescheduleForm">
+        <h:panelGroup rendered="#{not empty reservationController.updateReservation.reservationId}">
+            <h2>Reschedule Reservation</h2>
+            <h:panelGrid columns="3" style="border: 1px solid #ddd; padding: 20px; margin-top: 20px;">
+                <h:outputLabel value="Start Time:" style="color: #333; font-weight: bold;"/>
+                <h:inputText id="updStartTime" value="#{reservationController.updateReservation.startTime}"
+                             required="true" label="Start Time"
+                             style="width: 200px; padding: 5px; border: 1px solid #ccc;">
+                    <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                </h:inputText>
+                <h:message style="color:red;" for="updStartTime"/>
+
+                <h:outputLabel value="End Time:" style="color: #333; font-weight: bold;"/>
+                <h:inputText id="updEndTime" value="#{reservationController.updateReservation.endTime}"
+                             required="true" label="End Time"
+                             style="width: 200px; padding: 5px; border: 1px solid #ccc;">
+                    <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                </h:inputText>
+                <h:message style="color:red;" for="updEndTime"/>
+
+                <h:outputLabel value="Status:" style="color: #333; font-weight: bold;"/>
+                <h:outputText value="#{reservationController.updateReservation.status}"/>
+                <h:panelGroup/>
+
+                <h:panelGroup/>
+                <h:commandButton id="saveButton" value="Save Changes"
+                                 styleClass="save-btn"
+                                 action="#{reservationController.updateReservation()}"/>
+                <h:panelGroup/>
+            </h:panelGrid>
+        </h:panelGroup>
+    </h:form>
+</f:view>
+</html>
