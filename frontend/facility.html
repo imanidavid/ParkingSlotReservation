@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Choose a slot · Karita</title>
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap"
+    />
+
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/app.css" />
+    <link rel="stylesheet" href="styles/ticket.css" />
+    <link rel="stylesheet" href="styles/facility.css" />
+
+    <script src="scripts/theme.js"></script>
+  </head>
+  <body>
+    <header class="appbar" data-appbar data-active="browse"></header>
+
+    <main class="facility" id="facility" aria-busy="true">
+      <header class="facility__head">
+        <a class="facility__back link" href="browse.html">← All facilities</a>
+        <div class="facility__titles">
+          <h1 class="facility__name" id="facility-name">&nbsp;</h1>
+          <p class="facility__sub" id="facility-sub">&nbsp;</p>
+        </div>
+        <div class="levels" id="levels" role="group" aria-label="Level" hidden></div>
+      </header>
+
+      <div class="facility__body" id="picker">
+        <section class="lot" aria-labelledby="lot-label">
+          <div class="lot__head">
+            <h2 class="lot__label" id="lot-label">The lot</h2>
+            <p class="lot__window" id="lot-window" aria-live="polite"></p>
+          </div>
+          <div class="lot__scroll">
+            <div class="lot__grid" id="lot-grid"></div>
+          </div>
+          <ul class="legend" id="legend" aria-label="Legend"></ul>
+          <p class="sample-note" id="sample-note" hidden>Availability at this facility includes sample traffic for demonstration.</p>
+        </section>
+
+        <form class="panel" id="reserve-form" novalidate>
+          <div class="panel__block">
+            <span class="panel__label" id="selected-label">Selected slot</span>
+            <p class="panel__slot" id="selected-slot" aria-labelledby="selected-label" aria-live="polite">—</p>
+          </div>
+
+          <fieldset class="panel__block">
+            <legend class="panel__label">Duration</legend>
+            <div class="chips chips--durations" id="durations"></div>
+          </fieldset>
+
+          <div class="panel__block">
+            <label class="panel__label" for="date">Date</label>
+            <input class="input" type="date" id="date" name="date" required />
+          </div>
+
+          <div class="panel__block">
+            <label class="panel__label" for="start">Start time</label>
+            <div class="select">
+              <select class="input mono" id="start" name="start"></select>
+              <span class="select__caret" aria-hidden="true">▾</span>
+            </div>
+          </div>
+
+          <div class="panel__pair">
+            <div class="panel__block">
+              <label class="panel__label" for="plate">Plate</label>
+              <input class="input mono input--plate" id="plate" name="plate" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="RAD 482 C" maxlength="12" aria-describedby="plate-error" />
+              <span class="field__error" id="plate-error"></span>
+            </div>
+            <div class="panel__block">
+              <label class="panel__label" for="vehicle">Vehicle</label>
+              <div class="select">
+                <select class="input mono" id="vehicle" name="vehicle" aria-describedby="vehicle-error"></select>
+                <span class="select__caret" aria-hidden="true">▾</span>
+              </div>
+              <span class="field__error" id="vehicle-error"></span>
+            </div>
+          </div>
+
+          <hr class="rule" />
+
+          <div class="panel__price">
+            <span class="panel__label">Rate</span>
+            <span class="panel__amount" id="amount">—</span>
+          </div>
+          <p class="panel__calc" id="calc"></p>
+
+          <p class="panel__error" id="reserve-error" role="alert"></p>
+
+          <button class="btn btn--primary btn--block" type="submit" id="reserve-btn" disabled>Reserve slot</button>
+        </form>
+      </div>
+    </main>
+
+    <script src="scripts/karita.js"></script>
+    <script src="scripts/facility.js"></script>
+  </body>
+</html>

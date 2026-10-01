@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Payment · Karita</title>
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap"
+    />
+
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/app.css" />
+    <link rel="stylesheet" href="styles/pay.css" />
+
+    <script src="scripts/theme.js"></script>
+  </head>
+  <body>
+    <header class="appbar" data-appbar data-active="reservations"></header>
+
+    <main class="narrow" id="pay" aria-busy="true">
+      <h1 class="sr-only">Payment</h1>
+
+      <section class="mini" id="mini" aria-label="Reservation summary">
+        <div class="mini__stub"><span class="mini__serial" id="mini-serial">№ —</span></div>
+        <dl class="mini__spec">
+          <div><dt>Slot</dt><dd id="mini-slot">—</dd></div>
+          <div><dt>Facility</dt><dd id="mini-facility">—</dd></div>
+          <div><dt>Window</dt><dd id="mini-window">—</dd></div>
+          <div><dt>Plate</dt><dd id="mini-plate">—</dd></div>
+        </dl>
+      </section>
+
+      <hr class="rule narrow__rule" />
+
+      <section aria-labelledby="payment-label">
+        <h2 class="section-label" id="payment-label">Payment</h2>
+
+        <div class="due">
+          <span class="due__label">Amount due</span>
+          <span class="due__amount" id="amount-due">—</span>
+        </div>
+
+        <form class="payform" id="pay-form" novalidate>
+          <fieldset class="payform__block">
+            <legend class="payform__label">Method</legend>
+            <div class="chips" id="methods">
+              <input class="chip__input" type="radio" name="method" id="m-cash" value="Cash" />
+              <label class="chip" for="m-cash">CASH</label>
+              <input class="chip__input" type="radio" name="method" id="m-momo" value="Mobile Money" checked />
+              <label class="chip" for="m-momo">MOBILE MONEY</label>
+              <input class="chip__input" type="radio" name="method" id="m-card" value="Card" />
+              <label class="chip" for="m-card">CARD</label>
+            </div>
+            <p class="payform__hint" id="cash-hint" hidden>Pay the attendant at entry. Your slot stays reserved.</p>
+          </fieldset>
+
+          <div class="payform__block" id="momo-fields">
+            <label class="payform__label" for="phone">Mobile number</label>
+            <input class="input mono" id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+250 7XX XXX XXX" aria-describedby="phone-error" />
+            <span class="field__error" id="phone-error"></span>
+          </div>
+
+          <div class="payform__block" id="card-fields" hidden>
+            <div class="cardrow">
+              <div class="cardrow__number">
+                <label class="payform__label" for="cardNumber">Card number</label>
+                <input class="input mono" id="cardNumber" name="cardNumber" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" maxlength="23" aria-describedby="cardNumber-error" />
+                <span class="field__error" id="cardNumber-error"></span>
+              </div>
+              <div>
+                <label class="payform__label" for="expiry">Expiry</label>
+                <input class="input mono" id="expiry" name="expiry" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" maxlength="5" aria-describedby="expiry-error" />
+                <span class="field__error" id="expiry-error"></span>
+              </div>
+              <div>
+                <label class="payform__label" for="cvc">CVC</label>
+                <input class="input mono" id="cvc" name="cvc" inputmode="numeric" autocomplete="cc-csc" placeholder="123" maxlength="4" aria-describedby="cvc-error" />
+                <span class="field__error" id="cvc-error"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="payform__block">
+            <label class="payform__label" for="reference">Reference <span class="payform__optional">optional</span></label>
+            <input class="input mono" id="reference" name="reference" maxlength="80" aria-describedby="reference-help reference-error" />
+            <span class="payform__hint" id="reference-help">Add a note for your records</span>
+            <span class="field__error" id="reference-error"></span>
+          </div>
+
+          <p class="payform__error" id="pay-error" role="alert"></p>
+
+          <button class="btn btn--primary btn--block" type="submit" id="pay-btn" disabled>Confirm payment</button>
+
+          <hr class="rule" />
+          <p class="payform__cancel"><a class="link" href="reservations.html">Cancel</a></p>
+        </form>
+      </section>
+    </main>
+
+    <script src="scripts/karita.js"></script>
+    <script src="scripts/pay.js"></script>
+  </body>
+</html>

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Karita</title>
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap"
+    />
+
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/app.css" />
+    <link rel="stylesheet" href="styles/ticket.css" />
+
+    <script src="scripts/theme.js"></script>
+  </head>
+  <body>
+    <header class="appbar" data-appbar data-active="home"></header>
+
+    <main class="page">
+      <section class="print-target" aria-labelledby="upcoming-label">
+        <h2 class="section-label" id="upcoming-label">Upcoming</h2>
+        <div id="upcoming-ticket"></div>
+        <p class="ticket-actions" id="upcoming-actions" hidden>
+          <a class="link" href="#" id="show-at-entry">Show at entry</a>
+          <span class="appbar__dot" aria-hidden="true">·</span>
+          <a class="link" href="reservations.html">View all reservations</a>
+        </p>
+      </section>
+
+      <section id="browse" aria-labelledby="browse-label">
+        <h2 class="section-label" id="browse-label">
+          <span>Browse facilities</span>
+          <span class="section-label__count" id="facilities-count"></span>
+        </h2>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Facility</th>
+                <th scope="col" class="col-location">Address</th>
+                <th scope="col" class="num">Available</th>
+                <th scope="col" class="num">Rates from</th>
+              </tr>
+            </thead>
+            <tbody id="facilities-body"></tbody>
+          </table>
+        </div>
+        <p class="section-more"><a class="link" href="browse.html">All facilities →</a></p>
+      </section>
+
+      <section id="past" aria-labelledby="past-label">
+        <h2 class="section-label" id="past-label">
+          <span>Past reservations</span>
+          <span class="section-label__count">Last 5</span>
+        </h2>
+        <ol class="stubs" id="past-list"></ol>
+      </section>
+    </main>
+
+    <script src="scripts/karita.js"></script>
+    <script src="scripts/home.js"></script>
+  </body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ticket · Karita</title>
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap"
+    />
+
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/app.css" />
+    <link rel="stylesheet" href="styles/slip.css" />
+
+    <script src="scripts/theme.js"></script>
+  </head>
+  <body>
+    <header class="appbar" data-appbar data-active="reservations"></header>
+
+    <main class="slip-page" id="slip-page" aria-busy="true">
+      <h1 class="sr-only">Parking ticket</h1>
+
+      <article class="slip" id="slip" aria-label="Parking ticket">
+        <!-- paper grain -->
+        <svg class="slip__grain" aria-hidden="true" focusable="false">
+          <filter id="grain">
+            <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" />
+            <feColorMatrix type="saturate" values="0" />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#grain)" />
+        </svg>
+
+        <!-- scalloped right edge -->
+        <svg class="slip__scallops" aria-hidden="true" focusable="false">
+          <defs>
+            <pattern id="scallop" width="8" height="18" patternUnits="userSpaceOnUse">
+              <path class="slip__notch" d="M8 5 A4 4 0 0 0 8 13 Z" />
+              <path class="slip__edge" d="M7.5 0 V5 A3.5 3.5 0 0 0 7.5 13 V18" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#scallop)" />
+        </svg>
+
+        <div class="slip__top">
+          <span class="slip__mark">KARITA</span>
+          <span class="slip__serial" id="t-serial">№ —</span>
+        </div>
+
+        <div class="slip__hero">
+          <p class="slip__slot" id="t-slot">—</p>
+          <p class="slip__where" id="t-where">&nbsp;</p>
+        </div>
+
+        <dl class="slip__spec">
+          <div><dt>Date</dt><dd id="t-date">—</dd></div>
+          <div><dt>Window</dt><dd id="t-window">—</dd></div>
+          <div><dt>Duration</dt><dd id="t-duration">—</dd></div>
+          <div><dt>Vehicle</dt><dd id="t-vehicle">—</dd></div>
+          <div><dt>Plate</dt><dd id="t-plate">—</dd></div>
+          <div><dt>Amount</dt><dd id="t-amount">—</dd></div>
+          <div><dt>Method</dt><dd id="t-method">—</dd></div>
+        </dl>
+
+        <div class="slip__bottom">
+          <svg class="slip__qr" id="t-qr" viewBox="0 0 8 8" role="img" aria-label="Entry code"></svg>
+          <span class="slip__stamp" id="t-stamp" hidden></span>
+        </div>
+      </article>
+
+      <div class="slip-actions">
+        <p class="slip-actions__error" id="t-error" role="alert"></p>
+        <button class="btn btn--primary btn--block" type="button" id="save-ticket" disabled>Save ticket</button>
+        <p class="slip-actions__links">
+          <a class="link" href="reservations.html">View all reservations</a>
+          <span class="appbar__dot" aria-hidden="true">·</span>
+          <a class="link" href="home.html">Back to home</a>
+        </p>
+        <p class="slip-actions__small" id="t-small">Show this ticket at entry. The attendant will verify your plate.</p>
+      </div>
+    </main>
+
+    <script src="scripts/karita.js"></script>
+    <script src="scripts/ticket.js"></script>
+  </body>
+</html>

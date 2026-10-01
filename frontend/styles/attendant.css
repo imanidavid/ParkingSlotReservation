@@ -1,0 +1,460 @@
+/* Attendant desk: plate lookup, verify result, live board. */
+
+.desk {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 16px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+/* ---- Lookup ----------------------------------------------------------- */
+
+.lookup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.lookup__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lookup__input {
+  width: 100%;
+  height: 84px;
+  padding: 0 20px;
+  background: var(--surface);
+  color: var(--ink);
+  border: var(--border);
+  border-radius: var(--radius-input);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 48px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  outline: none;
+  transition: border-color var(--dur-hover) var(--ease);
+}
+
+.lookup__input::placeholder {
+  color: var(--rule);
+}
+
+.lookup__input:hover {
+  border-color: var(--ink-muted);
+}
+
+.lookup__input:focus {
+  border-color: var(--ink);
+}
+
+.lookup__input[aria-invalid="true"] {
+  border-color: var(--stamp);
+}
+
+.lookup__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 6px;
+}
+
+.lookup__btn {
+  min-width: 180px;
+  height: 52px;
+  font-size: 16px;
+}
+
+.lookup__mode {
+  font-size: 14px;
+}
+
+/* ---- Result: match ---------------------------------------------------- */
+
+.result:not(:empty) {
+  margin-top: 24px;
+}
+
+.vticket {
+  position: relative;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  background: var(--surface);
+  border: var(--border);
+  overflow: hidden;
+}
+
+.vticket__stub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px dashed var(--ink-muted);
+}
+
+.vticket__serial {
+  writing-mode: vertical-rl;
+  text-orientation: sideways;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.vticket__body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 28px;
+  row-gap: 18px;
+  padding: 24px 24px 24px 26px;
+}
+
+.vticket__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 28px;
+  border-right: var(--border);
+}
+
+.vticket__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.vticket__slot {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 88px;
+  font-weight: 500;
+  line-height: 0.95;
+}
+
+.vticket__spec {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
+.vticket__spec dt,
+.vticket__spec dd {
+  margin: 0;
+  padding: 5px 0;
+  border-bottom: 1px dotted var(--rule);
+}
+
+.vticket__spec dt {
+  padding-right: 18px;
+  font-size: 11px;
+  line-height: 21px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.vticket__spec > :nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.vticket__note {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.vticket__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 14px;
+}
+
+.vticket__actions .btn {
+  min-width: 200px;
+}
+
+.vticket__actions .btn:disabled {
+  cursor: not-allowed;
+  background: var(--bg);
+  border-color: var(--rule);
+  color: var(--ink-muted);
+}
+
+.vticket__stamp {
+  position: absolute;
+  bottom: 26px;
+  right: 26px;
+  padding: 5px 14px;
+  border: 2px solid currentColor;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  line-height: 1;
+  text-transform: uppercase;
+  transform: rotate(-8deg);
+  opacity: 0.8;
+  pointer-events: none;
+  user-select: none;
+  transition: color var(--dur-status) var(--ease);
+}
+
+.vticket__stamp--paid,
+.vticket__stamp--occupied {
+  color: var(--available);
+}
+
+.vticket__stamp--unpaid {
+  color: var(--stamp);
+}
+
+/* ---- Result: no match ------------------------------------------------- */
+
+.miss {
+  padding: 18px 20px;
+  background: var(--surface);
+  border: var(--border);
+  border-left: 1px solid var(--stamp);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.miss__text {
+  margin: 0;
+  font-size: 15px;
+}
+
+.result__error {
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--stamp);
+}
+
+/* ---- Live board ------------------------------------------------------- */
+
+.board__counts {
+  margin: 0 0 16px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.board {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 28px;
+}
+
+.board__levelname {
+  margin: 0 0 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.board__grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 12), 30px);
+  gap: 3px;
+}
+
+.bcell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-input);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  letter-spacing: -0.04em;
+  transition: background-color var(--dur-status) var(--ease),
+    border-color var(--dur-status) var(--ease),
+    color var(--dur-status) var(--ease);
+}
+
+.bcell--reserved {
+  background: color-mix(in srgb, var(--reserved) 12%, var(--surface));
+  border-color: var(--reserved);
+  color: var(--reserved-ink);
+}
+
+.bcell--occupied {
+  background: color-mix(in srgb, var(--occupied) 12%, var(--surface));
+  border-color: var(--occupied);
+  color: var(--occupied-ink);
+}
+
+.bcell--inactive {
+  background: var(--bg);
+  border-style: dashed;
+  color: var(--ink-muted);
+  text-decoration: line-through;
+}
+
+/* the slot just verified */
+.bcell--focus {
+  outline: 1px solid var(--ink);
+  outline-offset: 1px;
+}
+
+.legend__swatch.bcell--available {
+  border: 1px solid var(--rule);
+  background: var(--surface);
+}
+
+.legend__swatch.bcell--reserved,
+.legend__swatch.bcell--occupied {
+  border-width: 1px;
+  border-style: solid;
+}
+
+.board__legend .legend__swatch {
+  width: 12px;
+  height: 12px;
+  aspect-ratio: auto;
+}
+
+/* ---- Today list -------------------------------------------------------- */
+
+.table--today {
+  min-width: 560px;
+}
+
+.table--today .mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.table--today tbody tr {
+  cursor: default;
+}
+
+.today__actions {
+  text-align: right;
+  font-size: 13px;
+}
+
+.today__actions .rstub__dot {
+  margin: 0 6px;
+  color: var(--ink-muted);
+}
+
+.today__state {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.today__state--late,
+.today__state--no-show {
+  color: var(--stamp);
+}
+
+.today__state--parked {
+  color: var(--ink);
+}
+
+.sample-note {
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+/* ---- Small screens ---------------------------------------------------- */
+
+@media (max-width: 600px) {
+  .lookup__input {
+    height: 68px;
+    font-size: 34px;
+    padding: 0 14px;
+  }
+
+  .lookup__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lookup__mode {
+    align-self: flex-start;
+  }
+
+  .vticket__body {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 18px 16px 18px 18px;
+  }
+
+  .vticket__head {
+    padding: 0 0 12px;
+    border-right: 0;
+    border-bottom: var(--border);
+  }
+
+  .vticket__slot {
+    font-size: 64px;
+  }
+
+  .vticket__stamp {
+    top: 40px;
+    bottom: auto;
+    right: 16px;
+    font-size: 20px;
+  }
+
+  .vticket__actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .vticket__actions .btn {
+    width: 100%;
+  }
+
+  .board__level {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .board__grid {
+    grid-template-columns: repeat(var(--cols, 12), 30px);
+  }
+
+  .bcell {
+    font-size: 10px;
+  }
+}
+
+.legend__swatch.bcell--inactive {
+  border: 1px dashed var(--rule);
+  background: var(--bg);
+}

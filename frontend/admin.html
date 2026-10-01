@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin · Karita</title>
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap"
+    />
+
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/app.css" />
+    <link rel="stylesheet" href="styles/admin.css" />
+
+    <script src="scripts/theme.js"></script>
+  </head>
+  <body>
+    <header class="appbar" data-appbar data-nav="admin" data-active="facilities"></header>
+
+    <main class="console" id="console">
+      <h1 class="sr-only">Admin</h1>
+
+      <!-- Facilities -->
+      <section class="pane" id="facilities" aria-labelledby="facilities-label">
+        <h2 class="section-label" id="facilities-label">
+          <span>Facilities</span>
+          <span class="section-label__count" id="facilities-count"></span>
+        </h2>
+        <div class="toolbar">
+          <p class="toolbar__summary" id="facilities-summary" aria-live="polite"></p>
+          <button class="btn btn--secondary btn--small" type="button" id="facility-new">New facility</button>
+        </div>
+        <div id="facility-create"></div>
+        <p class="pane__error" id="facilities-error" role="alert"></p>
+        <div class="table-wrap">
+          <table class="table table--admin" id="facilities-table">
+            <thead>
+              <tr>
+                <th scope="col">Facility</th>
+                <th scope="col">Address</th>
+                <th scope="col">Levels</th>
+                <th scope="col" class="num">Slots</th>
+                <th scope="col" class="num">Rate</th>
+                <th scope="col">Status</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="facilities-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Slots -->
+      <section class="pane" id="slots" aria-labelledby="slots-label" hidden>
+        <h2 class="section-label" id="slots-label">
+          <span>Parking slots</span>
+          <span class="section-label__count" id="slots-count"></span>
+        </h2>
+        <div class="toolbar">
+          <div class="filters">
+            <label class="filter">
+              <span class="filter__label">Facility</span>
+              <span class="select"><select class="input mono" id="slots-facility"></select><span class="select__caret" aria-hidden="true">▾</span></span>
+            </label>
+            <label class="filter">
+              <span class="filter__label">Level</span>
+              <span class="select"><select class="input mono" id="slots-level"></select><span class="select__caret" aria-hidden="true">▾</span></span>
+            </label>
+          </div>
+          <button class="btn btn--secondary btn--small" type="button" id="slot-new">New slot</button>
+        </div>
+        <div id="slot-create"></div>
+        <p class="toolbar__summary" id="slots-summary" aria-live="polite"></p>
+        <p class="pane__error" id="slots-error" role="alert"></p>
+        <div class="table-wrap">
+          <table class="table table--admin" id="slots-table">
+            <thead>
+              <tr>
+                <th scope="col">Level</th>
+                <th scope="col">Slot</th>
+                <th scope="col">Vehicle type</th>
+                <th scope="col">Service</th>
+                <th scope="col">Now</th>
+                <th scope="col" class="num">Upcoming</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="slots-body"></tbody>
+          </table>
+        </div>
+        <p class="empty" id="slots-empty" hidden>No slots on this level yet. Use “New slot” to add one.</p>
+      </section>
+
+      <!-- Reservations -->
+      <section class="pane" id="reservations" aria-labelledby="reservations-label" hidden>
+        <h2 class="section-label" id="reservations-label">
+          <span>All reservations</span>
+          <span class="section-label__count" id="reservations-count"></span>
+        </h2>
+        <div class="toolbar">
+          <div class="filters">
+            <label class="filter">
+              <span class="filter__label">Facility</span>
+              <span class="select"><select class="input mono" id="res-facility"></select><span class="select__caret" aria-hidden="true">▾</span></span>
+            </label>
+            <label class="filter">
+              <span class="filter__label">Status</span>
+              <span class="select">
+                <select class="input mono" id="res-status">
+                  <option value="">All</option>
+                  <option value="Upcoming">Upcoming</option>
+                  <option value="Confirmed">Confirmed (unpaid)</option>
+                  <option value="Paid">Paid</option>
+                  <option value="Cancelled">Cancelled</option>
+                  <option value="No-show">No-show</option>
+                </select>
+                <span class="select__caret" aria-hidden="true">▾</span>
+              </span>
+            </label>
+            <label class="filter">
+              <span class="filter__label">Date</span>
+              <input class="input mono" type="date" id="res-date" />
+            </label>
+            <button class="linkbtn filters__clear" type="button" id="res-clear">Clear</button>
+          </div>
+        </div>
+        <p class="toolbar__summary" id="reservations-summary" aria-live="polite"></p>
+        <p class="pane__error" id="reservations-error" role="alert"></p>
+        <div class="table-wrap">
+          <table class="table table--admin" id="reservations-table">
+            <thead>
+              <tr>
+                <th scope="col">№</th>
+                <th scope="col">Date</th>
+                <th scope="col">Window</th>
+                <th scope="col">Facility · slot</th>
+                <th scope="col">Driver</th>
+                <th scope="col">Plate</th>
+                <th scope="col" class="num">Amount</th>
+                <th scope="col">Status</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="reservations-body"></tbody>
+          </table>
+        </div>
+        <p class="empty" id="reservations-empty" hidden>No reservations match these filters.</p>
+      </section>
+
+      <!-- Revenue -->
+      <section class="pane" id="revenue" aria-labelledby="revenue-label" hidden>
+        <h2 class="section-label" id="revenue-label">
+          <span>Occupancy &amp; revenue by facility</span>
+          <span class="section-label__count" id="revenue-asof"></span>
+        </h2>
+        <p class="toolbar__summary" id="revenue-summary"></p>
+        <p class="pane__error" id="revenue-error" role="alert"></p>
+        <div class="table-wrap">
+          <table class="table table--admin table--revenue">
+            <thead>
+              <tr>
+                <th scope="col">Facility</th>
+                <th scope="col" class="num">In service</th>
+                <th scope="col" class="num">Occupied</th>
+                <th scope="col" class="num">Reserved</th>
+                <th scope="col" class="num">Occupancy</th>
+                <th scope="col" class="num">Bookings 30d</th>
+                <th scope="col" class="num">Revenue 30d</th>
+                <th scope="col" class="num">Pending</th>
+              </tr>
+            </thead>
+            <tbody id="revenue-body"></tbody>
+            <tfoot id="revenue-foot"></tfoot>
+          </table>
+        </div>
+        <p class="sample-note" id="revenue-note">Revenue counts recorded payments only.</p>
+      </section>
+    </main>
+
+    <script src="scripts/karita.js"></script>
+    <script src="scripts/admin.js"></script>
+  </body>
+</html>

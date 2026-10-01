@@ -1,0 +1,253 @@
+/* The Ticket — the printed parking stub shown after payment. */
+
+.slip-page {
+  flex: 1;
+  width: 100%;
+  max-width: 512px;
+  margin: 0 auto;
+  padding: 48px 16px 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.slip {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-left: 1px dashed var(--ink-muted); /* perforation */
+  border-right: 0; /* drawn by the scallop strip */
+  overflow: hidden;
+}
+
+/* Barely-there paper grain. */
+.slip__grain {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.05;
+  pointer-events: none;
+}
+
+:root[data-theme="dark"] .slip__grain {
+  opacity: 0.07;
+  mix-blend-mode: screen;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .slip__grain {
+    opacity: 0.07;
+    mix-blend-mode: screen;
+  }
+}
+
+/* Column of semicircle notches along the right edge. */
+.slip__scallops {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  pointer-events: none;
+}
+
+.slip__notch {
+  fill: var(--bg);
+}
+
+.slip__edge {
+  fill: none;
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+.slip > :not(svg) {
+  position: relative;
+}
+
+/* ---- Top row ---------------------------------------------------------- */
+
+.slip__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 18px 32px 14px 28px;
+  border-bottom: var(--border);
+}
+
+.slip__mark {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+}
+
+.slip__serial {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+}
+
+/* ---- Slot ------------------------------------------------------------- */
+
+.slip__hero {
+  padding: 26px 32px 22px 28px;
+  text-align: center;
+  border-bottom: var(--border);
+}
+
+.slip__slot {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 96px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.slip__where {
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* ---- Spec list -------------------------------------------------------- */
+
+.slip__spec {
+  margin: 0;
+  padding: 14px 32px 14px 28px;
+  border-bottom: var(--border);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
+.slip__spec > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 5px 0;
+}
+
+.slip__spec dt {
+  color: var(--ink-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.slip__spec dd {
+  margin: 0;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+/* ---- Bottom row ------------------------------------------------------- */
+
+.slip__bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 116px;
+  padding: 20px 40px 20px 28px;
+}
+
+.slip__qr {
+  width: 64px;
+  height: 64px;
+  color: var(--ink);
+  shape-rendering: crispEdges;
+}
+
+.slip__qr rect {
+  fill: currentColor;
+}
+
+.slip__stamp {
+  margin-right: 8px;
+  padding: 6px 16px;
+  border: 1px solid var(--stamp);
+  color: var(--stamp);
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  line-height: 1;
+  text-transform: uppercase;
+  transform: rotate(-8deg);
+  opacity: 0.78;
+  user-select: none;
+  transition: color var(--dur-status) var(--ease),
+    border-color var(--dur-status) var(--ease);
+}
+
+.slip__stamp--pending {
+  border-color: var(--ink-muted);
+  color: var(--ink-muted);
+  font-size: 20px;
+}
+
+/* ---- Below the ticket ------------------------------------------------- */
+
+.slip-actions {
+  width: 100%;
+  max-width: 480px;
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.slip-actions__links {
+  margin: 0;
+  font-size: 14px;
+}
+
+.slip-actions__small {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--ink-muted);
+}
+
+.slip-actions__error {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--stamp);
+}
+
+.slip-actions__error:empty {
+  display: none;
+}
+
+@media (max-width: 420px) {
+  .slip__slot {
+    font-size: 80px;
+  }
+
+  .slip__spec {
+    font-size: 13px;
+  }
+}
+
+@media print {
+  body > :not(main),
+  .slip-actions {
+    display: none !important;
+  }
+
+  .slip-page {
+    padding: 0;
+  }
+}

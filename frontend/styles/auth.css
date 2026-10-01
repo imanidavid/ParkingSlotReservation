@@ -1,0 +1,92 @@
+/* Sign in / Register panel. */
+
+.auth {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+}
+
+.auth__panel {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: var(--border);
+  border-radius: var(--radius);
+}
+
+.auth__head {
+  padding: 28px 32px 20px;
+  text-align: center;
+}
+
+.wordmark {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  /* letter-spacing adds trailing space; pull it back so the mark centres */
+  margin-right: -0.32em;
+  line-height: 1.2;
+}
+
+.wordmark__serial {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ink-muted);
+}
+
+.auth__body {
+  padding: 24px 32px 28px;
+}
+
+.auth__title {
+  margin: 0 0 24px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.auth__form .btn {
+  margin-top: 6px;
+}
+
+.auth__status {
+  margin: 0;
+  font-size: 13px;
+  color: var(--stamp);
+}
+
+.auth__status:empty {
+  display: none;
+}
+
+.auth__foot {
+  padding: 16px 32px 20px;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+@media (max-width: 480px) {
+  .auth {
+    padding: 24px 16px;
+  }
+
+  .auth__head,
+  .auth__body,
+  .auth__foot {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
