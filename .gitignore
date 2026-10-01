@@ -1,6 +1,18 @@
-target/
-.idea/
-*.iml
+# build output
+backend/target/
+node_modules/
 *.class
-*.war
-*.log
+*.jar
+
+# IDE / local tooling
+.idea/
+.vscode/
+.claude/
+*.iml
+
+# secrets
+.env
+*.local.properties
+
+# OS
+.DS_Store
