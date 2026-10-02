@@ -1,5 +1,6 @@
 package auca.ac.rw.parkinkslotManagement.service;
 
+import auca.ac.rw.parkinkslotManagement.messaging.Events;
 import auca.ac.rw.parkinkslotManagement.model.Facility;
 import auca.ac.rw.parkinkslotManagement.model.ParkingSlot;
 import auca.ac.rw.parkinkslotManagement.model.Payment;
@@ -22,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -37,16 +39,18 @@ public class ReservationService {
     private final FacilityRepository facilities;
     private final UserRepository users;
     private final PaymentService payments;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
 
     public ReservationService(
             ReservationRepository reservations, ParkingSlotRepository slots, FacilityRepository facilities,
-            UserRepository users, PaymentService payments, Clock clock) {
+            UserRepository users, PaymentService payments, ApplicationEventPublisher events, Clock clock) {
         this.reservations = reservations;
         this.slots = slots;
         this.facilities = facilities;
         this.users = users;
         this.payments = payments;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -149,6 +153,7 @@ public class ReservationService {
         } catch (DataIntegrityViolationException e) {
             throw ApiException.conflict(number + " was just taken for that time. Pick another slot.");
         }
+        events.publishEvent(Events.confirmed(r));
         return Views.reservation(r, now);
     }
 
@@ -166,6 +171,7 @@ public class ReservationService {
         p.setReference(outcome.reference());
         p.setAmount(r.getAmount());
         p.setPaidAt(outcome.status() == PaymentStatus.PAID ? clock.instant() : null);
+        if (outcome.status() == PaymentStatus.PAID) events.publishEvent(Events.paid(r));
         return new PayResult(Views.reservation(r, now), outcome.error());
     }
 
@@ -176,6 +182,7 @@ public class ReservationService {
             throw ApiException.conflict("This reservation has started or already ended, so it can't be cancelled.");
         }
         r.setStatus(ReservationStatus.CANCELLED);
+        events.publishEvent(Events.cancelled(r));
         return Views.reservation(r, now);
     }
 

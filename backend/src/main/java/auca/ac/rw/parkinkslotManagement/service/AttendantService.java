@@ -1,5 +1,6 @@
 package auca.ac.rw.parkinkslotManagement.service;
 
+import auca.ac.rw.parkinkslotManagement.messaging.Events;
 import auca.ac.rw.parkinkslotManagement.model.Facility;
 import auca.ac.rw.parkinkslotManagement.model.ParkingSlot;
 import auca.ac.rw.parkinkslotManagement.model.Payment;
@@ -20,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,15 +34,17 @@ public class AttendantService {
     private final ReservationRepository reservations;
     private final ParkingSlotRepository slots;
     private final AvailabilityService availability;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
 
     public AttendantService(
             UserRepository users, ReservationRepository reservations, ParkingSlotRepository slots,
-            AvailabilityService availability, Clock clock) {
+            AvailabilityService availability, ApplicationEventPublisher events, Clock clock) {
         this.users = users;
         this.reservations = reservations;
         this.slots = slots;
         this.availability = availability;
+        this.events = events;
         this.clock = clock;
     }
 
@@ -133,6 +137,7 @@ public class AttendantService {
             p.setDetail("Collected at entry");
             p.setAmount(r.getAmount());
             p.setPaidAt(clock.instant());
+            events.publishEvent(Events.paid(r));
         }
         return Views.attendant(r, now);
     }

@@ -34,6 +34,7 @@ the session cookie just works (no CORS).
 ## Requirements
 
 - Java 17+ (21 tested), PostgreSQL 14+ (16 tested) with the `btree_gist` extension available (standard in PostgreSQL)
+- RabbitMQ 3.9+ for notification events — **optional**: set `NOTIFICATIONS=false` to run without it
 - Maven is optional (`backend/mvnw` downloads it)
 - For the browser tests: Node 18+ and Chrome or Chromium
 
@@ -55,6 +56,12 @@ seeds demo data (24 Kigali facilities, 1,476 slots, demo accounts, and about
 
 ```
 npm start            # or: cd backend && ./mvnw spring-boot:run
+```
+
+Without a broker running, start it as:
+
+```
+NOTIFICATIONS=false npm start
 ```
 
 Open **http://localhost:8080**. Data lives in PostgreSQL, so it survives restarts;
@@ -80,10 +87,14 @@ attendant records it, card `4000 0000 0000 0002` always declines.
 ## Tests
 
 ```
-npm run test:backend   # 13 API integration tests (MockMvc) on karita_test
+npm run test:backend   # 17 tests on karita_test: 13 API (MockMvc) + 4 messaging
 npm test               # 14 browser checks: builds the jar, runs it on karita_test
 npm run test:all
 ```
+
+The four messaging tests need a broker on `localhost:5672` and skip themselves
+when there isn't one. Everything else runs with notifications switched off, so
+no suite requires RabbitMQ.
 
 Both use the `smoke` profile: database `karita_test`, rebuilt and reseeded on
 each start. Don't run them at the same time (they share that database).
@@ -103,6 +114,11 @@ each start. Don't run them at the same time (they share that database).
   PostgreSQL enforces it with an exclusion constraint on
   `(slot_id, tsrange(start_time, hold_until))` for confirmed reservations.
 - **Time:** Africa/Kigali throughout; an injectable `Clock` drives every rule.
+- **Notifications:** booking, payment and cancellation events publish to the
+  `karita.events` topic exchange *after the transaction commits*, and are
+  consumed by email and SMS listeners (delivery simulated — see
+  `docs/ARCHITECTURE.md §5`). A broker that's down logs the dropped event and
+  never fails the booking.
 
 ## Screens by requirement (Phase 1 documentation)
 

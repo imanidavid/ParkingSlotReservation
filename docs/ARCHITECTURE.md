@@ -132,7 +132,58 @@ intent, not measurements, and they're labelled that way.
 
 ---
 
-## 5. Frontend
+## 5. Messaging
+
+Three things are worth telling a driver about — their bay is booked, their money
+arrived, their booking is off — and none of them should happen on the request
+thread. A driver waiting on an HTTP response shouldn't also be waiting on an SMS
+gateway. So they go through RabbitMQ.
+
+```
+ReservationService ──publishEvent──▶ Spring event
+                                         │
+                                  EventRelay  @TransactionalEventListener(AFTER_COMMIT)
+                                         │
+                              karita.events (topic exchange)
+                                    ╱           ╲
+                   reservation.#, payment.#      reservation.confirmed,
+                              ╱                   payment.received
+                     karita.email                      ╲
+                              │                      karita.sms
+                   EmailNotificationListener              │
+                                                SmsNotificationListener
+```
+
+The `AFTER_COMMIT` phase is the part that matters. Publish inside the
+transaction and you can email somebody "your bay is booked" and then have the
+insert roll back on the exclusion constraint — the message is already gone and
+there's no unsending it. Waiting for the commit means nothing is ever announced
+that didn't actually happen.
+
+Routing is a topic exchange rather than a direct one so adding a consumer is a
+binding, not a code change. Email binds `reservation.#` and `payment.#` and
+hears everything; SMS binds only `reservation.confirmed` and `payment.received`,
+because a cancellation is not worth a text message. Both queues are durable and
+both dead-letter to `karita.events.dlx` after three failed attempts, so a message
+nobody can handle parks somewhere visible instead of spinning forever.
+
+Delivery itself is simulated — Phase 1 §3 puts external gateways out of scope
+alongside payment processors — so the listeners render the message they would
+send and log it. Swapping in SMTP or an SMS provider is a change to one class;
+nothing upstream knows how a notification gets delivered.
+
+Two deliberate details. The JSON converter trusts exactly one package for
+deserialisation (`…messaging`), because the alternative — the `*` wildcard — lets
+anyone who can reach the queue name a class and have it constructed on our side.
+And publishing is wrapped in a `try/catch`: by the time an event is published the
+booking is committed and the driver has their ticket, so a broker that's down is
+a notification problem, not a reservation problem. Verified by pointing the app
+at a dead port: it starts, bookings succeed, and each failed publish logs an
+error and is dropped. Running without a broker at all is a supported
+configuration — `karita.notifications.enabled=false` swaps in a no-op publisher,
+which is what the test profile uses.
+
+## 6. Frontend
 
 Ten pages of plain HTML, CSS and ES modules. No framework, no bundler, no
 `node_modules` — the backend serves `frontend/` as static files from the same
@@ -151,31 +202,31 @@ and I'm not going to pretend otherwise.
 
 ---
 
-## 6. Testing
+## 7. Testing
 
-Twenty-seven automated checks, all green at the time of writing.
+Thirty-one automated checks, all green at the time of writing.
 
 Thirteen MockMvc integration tests run the real Spring context against a real
 PostgreSQL (`karita_test`), covering auth, the reservation lifecycle, payment
-branches, role enforcement and the double-booking constraint. Fourteen
-end-to-end checks drive headless Chrome against a freshly built jar — real
-clicks, real forms, real redirects — including two robustness cases most suites
-skip: server restart mid-session, and server down entirely.
+branches, role enforcement and the double-booking constraint. Four messaging
+tests publish through a live broker and read the result back off a throwaway
+queue, checking that events route by key, survive JSON conversion both ways, and
+that a cancellation stays off the SMS queue; they skip themselves when nothing
+answers on the AMQP port, so the suite stays green on a machine without
+RabbitMQ. Fourteen end-to-end checks drive headless Chrome against a freshly
+built jar — real clicks, real forms, real redirects — including two robustness
+cases most suites skip: server restart mid-session, and server down entirely.
 
 ```
-npm run test:backend   # 13 passed
+npm run test:backend   # 17 passed (13 API + 4 messaging)
 npm test               # 14 passed
 ```
 
 ---
 
-## 7. Gaps against the brief
+## 8. Gaps against the brief
 
 Stated plainly, because a grader will find them anyway:
-
-**RabbitMQ is absent.** No broker, no AMQP dependency, no email or SMS. The
-reservation-confirmed and payment-received events are the natural publishers and
-the seams exist in `ReservationService`, but nothing is wired.
 
 **MongoDB is absent.** PostgreSQL does all persistence. Audit trails and payment
 receipts are the document-shaped candidates.
