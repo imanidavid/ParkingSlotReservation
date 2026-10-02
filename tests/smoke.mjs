@@ -145,6 +145,19 @@ async function waitFor(expr, label, timeout = 6000) {
 }
 
 let BASE;
+/**
+ * Tomorrow in Kigali, as yyyy-MM-dd. The booking tests pin a date because the
+ * facility page only offers start times that still fit before the 22:00 close —
+ * so "today" stops offering a 2-hour slot at 20:00, and the suite would fail in
+ * the evening for reasons that have nothing to do with the code under test.
+ */
+function tomorrow() {
+  const kigali = new Date(Date.now() + 24 * 60 * 60 * 1000).toLocaleDateString("en-CA", {
+    timeZone: "Africa/Kigali",
+  });
+  return kigali;
+}
+
 async function open(path, ready = "document.readyState === 'complete'") {
   await send("Page.navigate", { url: BASE + path });
   await sleep(150);
@@ -240,7 +253,7 @@ await test("driver: navigating between pages never loses the page or the session
 
 let serial;
 await test("driver: reserve with plate, pay by mobile money, see the PAID ticket", async () => {
-  await open("/facility.html?id=bk-arena&duration=2h", `${q(".cell--available:not(:disabled)")}`);
+  await open(`/facility.html?id=bk-arena&duration=2h&date=${tomorrow()}`, `${q(".cell--available:not(:disabled)")}`);
   await click(".cell--available:not(:disabled)");
   await type("#plate", "");
   await click("#reserve-btn");
@@ -258,7 +271,7 @@ await test("driver: reserve with plate, pay by mobile money, see the PAID ticket
 });
 
 await test("driver: declined card shows an error and keeps the form", async () => {
-  await open("/facility.html?id=amahoro-stadium&duration=1h", q(".cell--available:not(:disabled)"));
+  await open(`/facility.html?id=amahoro-stadium&duration=1h&date=${tomorrow()}`, q(".cell--available:not(:disabled)"));
   await click(".cell--available:not(:disabled)");
   await click("#reserve-btn");
   await waitFor(`location.pathname.endsWith("pay.html")`, "payment page");
