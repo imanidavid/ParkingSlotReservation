@@ -7,7 +7,8 @@ reservations and revenue.
 
 ```
 frontend/   pages (HTML), styles/, scripts/ — plain HTML/CSS/JS, no build step
-backend/    Spring Boot 4 + JPA/Hibernate + PostgreSQL; serves frontend/ and /api
+backend/    Spring Boot 4; PostgreSQL (core data), MongoDB (audit/notification
+            documents), RabbitMQ (events); serves frontend/ and /api
 docs/       the written documentation (see below)
 tests/      end-to-end browser tests (headless Chrome)
 ```
@@ -35,6 +36,7 @@ the session cookie just works (no CORS).
 
 - Java 17+ (21 tested), PostgreSQL 14+ (16 tested) with the `btree_gist` extension available (standard in PostgreSQL)
 - RabbitMQ 3.9+ for notification events — **optional**: set `NOTIFICATIONS=false` to run without it
+- MongoDB 6+ for the audit and notification log — **optional**: set `AUDIT=false` to run without it
 - Maven is optional (`backend/mvnw` downloads it)
 - For the browser tests: Node 18+ and Chrome or Chromium
 
@@ -58,10 +60,10 @@ seeds demo data (24 Kigali facilities, 1,476 slots, demo accounts, and about
 npm start            # or: cd backend && ./mvnw spring-boot:run
 ```
 
-Without a broker running, start it as:
+Without RabbitMQ or MongoDB running, start it as:
 
 ```
-NOTIFICATIONS=false npm start
+NOTIFICATIONS=false AUDIT=false npm start
 ```
 
 Open **http://localhost:8080**. Data lives in PostgreSQL, so it survives restarts;
@@ -87,14 +89,15 @@ attendant records it, card `4000 0000 0000 0002` always declines.
 ## Tests
 
 ```
-npm run test:backend   # 17 tests on karita_test: 13 API (MockMvc) + 4 messaging
+npm run test:backend   # 22 tests: 13 API (MockMvc) + 4 messaging + 5 operations log
 npm test               # 14 browser checks: builds the jar, runs it on karita_test
 npm run test:all
 ```
 
-The four messaging tests need a broker on `localhost:5672` and skip themselves
-when there isn't one. Everything else runs with notifications switched off, so
-no suite requires RabbitMQ.
+The four messaging tests need a broker on `localhost:5672`, and the five
+operations-log tests need MongoDB on `localhost:27017`; each group skips itself
+when its server isn't there. Everything else runs with both switched off, so no
+suite requires RabbitMQ or MongoDB.
 
 Both use the `smoke` profile: database `karita_test`, rebuilt and reseeded on
 each start. Don't run them at the same time (they share that database).
@@ -119,6 +122,9 @@ each start. Don't run them at the same time (they share that database).
   consumed by email and SMS listeners (delivery simulated — see
   `docs/ARCHITECTURE.md §5`). A broker that's down logs the dropped event and
   never fails the booking.
+- **Operations log:** staff actions and sent notifications are append-only
+  documents in MongoDB (`karita_ops`), readable at `/api/admin/audit` and
+  `/api/admin/notifications`. Writes are best-effort for the same reason.
 
 ## Screens by requirement (Phase 1 documentation)
 

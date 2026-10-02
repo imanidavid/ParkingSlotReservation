@@ -1,5 +1,7 @@
 package auca.ac.rw.parkinkslotManagement.messaging;
 
+import auca.ac.rw.parkinkslotManagement.ops.NotificationRecord;
+import auca.ac.rw.parkinkslotManagement.ops.OperationsLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -19,13 +21,22 @@ public class SmsNotificationListener {
     private static final Logger log = LoggerFactory.getLogger(SmsNotificationListener.class);
     private static final int ONE_SEGMENT = 160;
 
+    private final OperationsLog ops;
+
+    public SmsNotificationListener(OperationsLog ops) {
+        this.ops = ops;
+    }
+
     @RabbitListener(queues = RabbitConfig.SMS_QUEUE)
     public void onEvent(KaritaEvent event) {
         String text = null;
+        String eventId = null;
         if (event instanceof KaritaEvent.ReservationConfirmed e) {
+            eventId = e.eventId();
             text = "Karita: bay %s (level %s) at %s is booked for %s. Ticket %s. Show this at the barrier."
                     .formatted(e.slot(), e.level(), e.facility(), e.start(), e.serial());
         } else if (event instanceof KaritaEvent.PaymentReceived e) {
+            eventId = e.eventId();
             String tail = e.reference() != null && !e.reference().isBlank()
                     ? " Ref " + e.reference() + "."
                     : e.detail() != null && !e.detail().isBlank() ? " (" + e.detail() + ")" : "";
@@ -37,5 +48,6 @@ public class SmsNotificationListener {
             log.warn("SMS for {} is {} chars — will bill as two segments", event.routingKey(), text.length());
         }
         log.info("SMS → {} ({} chars)\n  {}", event.email(), text.length(), text);
+        ops.notified(NotificationRecord.sms(eventId, event.routingKey(), event.serial(), event.email(), text));
     }
 }

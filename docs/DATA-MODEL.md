@@ -1,8 +1,9 @@
 # Karita — Domain & Data Model
 
 Three passes over the same thing, getting progressively more concrete: the
-conceptual domain, then the entity model, then the physical PostgreSQL schema as
-it actually exists on disk.
+conceptual domain, then the entity model, then the physical schema as it actually
+exists on disk — PostgreSQL for the relational core, MongoDB for the two
+append-only document collections.
 
 The class diagram in the Phase 1 document still holds for the five core entities
 and their relationships. What it doesn't show is everything the implementation
@@ -185,6 +186,57 @@ instantly. GiST plus `btree_gist` is what lets one index mix the equality on
 | `reference` | `varchar(80)` | NO | |
 | `detail` | `varchar(40)` | NO | masked card tail / phone |
 | `paid_at` | `timestamptz` | YES | set on success |
+
+---
+
+## 3b. Document schema (MongoDB 7, database `karita_ops`)
+
+Two append-only collections. Neither is joined to the relational data, and
+neither carries a foreign key — see `ARCHITECTURE.md §6` for why they're here
+rather than in PostgreSQL.
+
+### `audit_events`
+
+| Field | Type | Notes |
+|---|---|---|
+| `_id` | ObjectId | |
+| `at` | date | **indexed**; sort key for every listing |
+| `action` | string | **indexed**; `SLOT_CREATED`, `CASH_RECORDED`, `NO_SHOW`, … |
+| `actorId` / `actorEmail` / `actorRole` | long / string / string | who did it |
+| `target` | string | `slot:1477`, `facility:kigali-heights`, `reservation:00412` |
+| `facility` | string | denormalised name, so a listing needs no lookup |
+| `details` | sub-document | **shape varies by action** |
+
+```json
+{ "at": "2026-10-02T18:23:35.900Z", "action": "SLOT_UPDATED",
+  "actorEmail": "admin@karita.rw", "actorRole": "ADMIN",
+  "target": "slot:1477", "facility": "Kigali Heights",
+  "details": { "level": "B1", "slot": "Z9", "active": false,
+               "fieldsSubmitted": ["active"] } }
+```
+
+That `details` object is the whole argument for the collection. A cash payment
+stores `{ "amount": 2000 }`; a release stores `{ "plate": …, "freedFrom": … }`.
+No shared columns, no nulls, no migration when a new action appears.
+
+### `notifications`
+
+| Field | Type | Notes |
+|---|---|---|
+| `_id` | ObjectId | |
+| `eventId` | string | **indexed**; the id the event carried, so a redelivery is detectable |
+| `at` | date | |
+| `channel` | string | `EMAIL` or `SMS` |
+| `routingKey` | string | `reservation.confirmed`, `payment.received`, `reservation.cancelled` |
+| `serial` | string | **indexed**; the reservation it's about |
+| `recipient` | string | |
+| `subject` | string | email only — absent on SMS |
+| `body` | string | what was sent |
+| `characters` | int | length; SMS bills per 160 |
+
+Written by the queue consumers after they render a message, so the broker says
+an event was published and this says a notification went out — which is what you
+need when a driver insists they never got their ticket.
 
 ---
 

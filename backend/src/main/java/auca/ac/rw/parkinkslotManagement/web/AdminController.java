@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,18 +32,22 @@ public class AdminController {
     }
 
     @PostMapping("/facilities")
-    public ResponseEntity<Map<String, Object>> createFacility(@RequestBody Map<String, Object> body) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(admin.createFacility(body));
+    public ResponseEntity<Map<String, Object>> createFacility(
+            @RequestAttribute(Session.REQUEST_UID) Long uid, @RequestBody Map<String, Object> body) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(admin.createFacility(uid, body));
     }
 
     @PatchMapping("/facilities/{code}")
-    public Map<String, Object> updateFacility(@PathVariable String code, @RequestBody Map<String, Object> body) {
-        return admin.updateFacility(code, body);
+    public Map<String, Object> updateFacility(
+            @RequestAttribute(Session.REQUEST_UID) Long uid, @PathVariable String code,
+            @RequestBody Map<String, Object> body) {
+        return admin.updateFacility(uid, code, body);
     }
 
     @DeleteMapping("/facilities/{code}")
-    public Map<String, Object> deleteFacility(@PathVariable String code) {
-        return admin.deleteFacility(code);
+    public Map<String, Object> deleteFacility(
+            @RequestAttribute(Session.REQUEST_UID) Long uid, @PathVariable String code) {
+        return admin.deleteFacility(uid, code);
     }
 
     @GetMapping("/slots")
@@ -52,18 +57,22 @@ public class AdminController {
     }
 
     @PostMapping("/slots")
-    public ResponseEntity<Map<String, Object>> createSlot(@RequestBody Map<String, Object> body) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(admin.createSlot(body));
+    public ResponseEntity<Map<String, Object>> createSlot(
+            @RequestAttribute(Session.REQUEST_UID) Long uid, @RequestBody Map<String, Object> body) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(admin.createSlot(uid, body));
     }
 
     @PatchMapping("/slots/{id:\\d+}")
-    public Map<String, Object> updateSlot(@PathVariable Long id, @RequestBody Map<String, Object> body) {
-        return admin.updateSlot(id, body);
+    public Map<String, Object> updateSlot(
+            @RequestAttribute(Session.REQUEST_UID) Long uid, @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+        return admin.updateSlot(uid, id, body);
     }
 
     @DeleteMapping("/slots/{id:\\d+}")
-    public Map<String, Object> deleteSlot(@PathVariable Long id) {
-        return admin.deleteSlot(id);
+    public Map<String, Object> deleteSlot(
+            @RequestAttribute(Session.REQUEST_UID) Long uid, @PathVariable Long id) {
+        return admin.deleteSlot(uid, id);
     }
 
     @GetMapping("/reservations")
@@ -75,8 +84,24 @@ public class AdminController {
     }
 
     @PostMapping("/reservations/{serial:\\d{5}}/cancel")
-    public Map<String, Object> cancel(@PathVariable String serial) {
-        return admin.cancel(serial);
+    public Map<String, Object> cancel(
+            @RequestAttribute(Session.REQUEST_UID) Long uid, @PathVariable String serial) {
+        return admin.cancel(uid, serial);
+    }
+
+    @GetMapping("/audit")
+    public Map<String, Object> audit(
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) String facility,
+            @RequestParam(defaultValue = "100") int limit) {
+        return admin.auditLog(action, facility, Math.min(Math.max(limit, 1), 500));
+    }
+
+    @GetMapping("/notifications")
+    public Map<String, Object> notifications(
+            @RequestParam(required = false) String serial,
+            @RequestParam(defaultValue = "100") int limit) {
+        return admin.notifications(serial, Math.min(Math.max(limit, 1), 500));
     }
 
     @GetMapping("/revenue")

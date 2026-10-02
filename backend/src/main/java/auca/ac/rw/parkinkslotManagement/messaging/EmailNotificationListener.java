@@ -1,5 +1,7 @@
 package auca.ac.rw.parkinkslotManagement.messaging;
 
+import auca.ac.rw.parkinkslotManagement.ops.NotificationRecord;
+import auca.ac.rw.parkinkslotManagement.ops.OperationsLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -9,8 +11,9 @@ import org.springframework.stereotype.Component;
 /**
  * Consumes {@code karita.email}. Real delivery is out of scope (Phase 1 §3 puts
  * external gateways out of scope alongside payment processors), so this renders
- * the message it would send and logs it. Swapping in an SMTP client is a change
- * to this class only — nothing upstream knows how a notification is delivered.
+ * the message it would send, logs it, and records it in the operations log.
+ * Swapping in an SMTP client is a change to this class only — nothing upstream
+ * knows how a notification is delivered.
  */
 @Component
 @ConditionalOnProperty(name = "karita.notifications.enabled", havingValue = "true", matchIfMissing = true)
@@ -18,10 +21,16 @@ public class EmailNotificationListener {
 
     private static final Logger log = LoggerFactory.getLogger(EmailNotificationListener.class);
 
+    private final OperationsLog ops;
+
+    public EmailNotificationListener(OperationsLog ops) {
+        this.ops = ops;
+    }
+
     @RabbitListener(queues = RabbitConfig.EMAIL_QUEUE)
     public void onEvent(KaritaEvent event) {
         if (event instanceof KaritaEvent.ReservationConfirmed e) {
-            send(e.email(), "Your parking bay is booked — " + e.serial(), """
+            send(e, e.eventId(), "Your parking bay is booked — " + e.serial(), """
                     Hi %s,
 
                     Bay %s on level %s at %s is yours.
@@ -38,7 +47,7 @@ public class EmailNotificationListener {
                             e.start(), e.end(), e.plate(), e.amount(), e.serial()));
 
         } else if (event instanceof KaritaEvent.PaymentReceived e) {
-            send(e.email(), "Payment received — " + e.serial(), """
+            send(e, e.eventId(), "Payment received — " + e.serial(), """
                     Hi %s,
 
                     We've received RWF %,d by %s for booking %s at %s.
@@ -49,7 +58,7 @@ public class EmailNotificationListener {
                             identifier(e.reference(), e.detail())));
 
         } else if (event instanceof KaritaEvent.ReservationCancelled e) {
-            send(e.email(), "Booking cancelled — " + e.serial(), """
+            send(e, e.eventId(), "Booking cancelled — " + e.serial(), """
                     Hi %s,
 
                     Booking %s at %s, due to start %s, has been cancelled and the
@@ -70,7 +79,10 @@ public class EmailNotificationListener {
         return "";
     }
 
-    private void send(String to, String subject, String body) {
-        log.info("EMAIL → {}\n  Subject: {}\n{}", to, subject, body.indent(2));
+    /** The event is passed in rather than held on the bean: this is a shared singleton. */
+    private void send(KaritaEvent event, String eventId, String subject, String body) {
+        log.info("EMAIL → {}\n  Subject: {}\n{}", event.email(), subject, body.indent(2));
+        ops.notified(NotificationRecord.email(
+                eventId, event.routingKey(), event.serial(), event.email(), subject, body));
     }
 }

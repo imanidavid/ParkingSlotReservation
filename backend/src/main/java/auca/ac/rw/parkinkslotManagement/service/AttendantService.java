@@ -1,6 +1,8 @@
 package auca.ac.rw.parkinkslotManagement.service;
 
 import auca.ac.rw.parkinkslotManagement.messaging.Events;
+import auca.ac.rw.parkinkslotManagement.ops.AuditEvent;
+import auca.ac.rw.parkinkslotManagement.ops.OperationsLog;
 import auca.ac.rw.parkinkslotManagement.model.Facility;
 import auca.ac.rw.parkinkslotManagement.model.ParkingSlot;
 import auca.ac.rw.parkinkslotManagement.model.Payment;
@@ -35,16 +37,18 @@ public class AttendantService {
     private final ParkingSlotRepository slots;
     private final AvailabilityService availability;
     private final ApplicationEventPublisher events;
+    private final OperationsLog ops;
     private final Clock clock;
 
     public AttendantService(
             UserRepository users, ReservationRepository reservations, ParkingSlotRepository slots,
-            AvailabilityService availability, ApplicationEventPublisher events, Clock clock) {
+            AvailabilityService availability, ApplicationEventPublisher events, OperationsLog ops, Clock clock) {
         this.users = users;
         this.reservations = reservations;
         this.slots = slots;
         this.availability = availability;
         this.events = events;
+        this.ops = ops;
         this.clock = clock;
     }
 
@@ -120,7 +124,10 @@ public class AttendantService {
             throw ApiException.conflict("This reservation is not for today.");
         }
         if (!Views.paid(r)) throw ApiException.conflict("Collect payment before marking the slot occupied.");
-        if (r.getCheckedInAt() == null) r.setCheckedInAt(clock.instant());
+        if (r.getCheckedInAt() == null) {
+            r.setCheckedInAt(clock.instant());
+            audit(userId, AuditEvent.CHECKED_IN, r, Map.of("plate", r.getVehiclePlate()));
+        }
         return Views.attendant(r, now);
     }
 
@@ -138,6 +145,7 @@ public class AttendantService {
             p.setAmount(r.getAmount());
             p.setPaidAt(clock.instant());
             events.publishEvent(Events.paid(r));
+            audit(userId, AuditEvent.CASH_RECORDED, r, Map.of("amount", r.getAmount()));
         }
         return Views.attendant(r, now);
     }
@@ -152,6 +160,7 @@ public class AttendantService {
             LocalDateTime nowMin = Hours.minute(now);
             LocalDateTime until = nowMin.isBefore(r.getStartTime()) ? r.getStartTime() : nowMin;
             if (until.isBefore(r.getHoldUntil())) r.setHoldUntil(until);
+            audit(userId, AuditEvent.RELEASED, r, Map.of("plate", r.getVehiclePlate(), "freedFrom", until.toString()));
         }
         return Views.attendant(r, now);
     }
@@ -164,7 +173,20 @@ public class AttendantService {
                     + " minutes after the start time, if the car hasn't arrived.");
         }
         r.setStatus(ReservationStatus.NO_SHOW);
+        audit(userId, AuditEvent.NO_SHOW, r, Map.of("plate", r.getVehiclePlate(), "start", r.getStartTime().toString()));
         return Views.attendant(r, now);
+    }
+
+    /**
+     * Records what the attendant did, in MongoDB. Outside the JPA transaction on
+     * purpose — an unreachable log must not stop a car being let through a barrier.
+     */
+    private void audit(Long userId, String action, Reservation r, Map<String, Object> details) {
+        User actor = users.findById(userId).orElse(null);
+        ops.audit(action, userId,
+                actor == null ? null : actor.getEmail(),
+                actor == null ? null : actor.getRole().name(),
+                "reservation:" + r.serial(), r.getFacility().getName(), details);
     }
 
     /** Wall board: every slot's status for the next hour. */

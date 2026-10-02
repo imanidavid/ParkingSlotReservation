@@ -118,6 +118,8 @@ future `MM/YY` and 3–4 digit CVC; card `4000 0000 0000 0002` always declines.
 | `DELETE /api/admin/slots/{slotId}` | `{ ok: true }`; `409` with upcoming reservations |
 | `GET /api/admin/reservations?facility&status&date` | `{ reservations: [admin view] }`; status: `Upcoming`, a display value, or a status |
 | `POST /api/admin/reservations/{serial}/cancel` | `{ reservation }` |
+| `GET /api/admin/audit?action&facility&limit` | `{ events: [{ at, action, actor, role, target, facility, details }], limit }` — MongoDB; `details` shape varies by action; newest first, limit 1–500 (default 100) |
+| `GET /api/admin/notifications?serial&limit` | `{ notifications: [{ at, channel, event, serial, to, subject, body, characters }], limit }` — MongoDB; `subject` is null for SMS |
 | `GET /api/admin/revenue` | `{ asOf, since, until, rows: [{ id, name, active, slots, occupied, reserved, occupancy, reservations, revenue, pending, sampleTraffic }], total }` |
 
 Facility/slot validation errors return `400 { error, fields }` keyed by the

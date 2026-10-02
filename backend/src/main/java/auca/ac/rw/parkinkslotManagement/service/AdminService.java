@@ -1,10 +1,13 @@
 package auca.ac.rw.parkinkslotManagement.service;
 
+import auca.ac.rw.parkinkslotManagement.ops.AuditEvent;
+import auca.ac.rw.parkinkslotManagement.ops.OperationsLog;
 import auca.ac.rw.parkinkslotManagement.model.Facility;
 import auca.ac.rw.parkinkslotManagement.model.ParkingSlot;
 import auca.ac.rw.parkinkslotManagement.model.PaymentStatus;
 import auca.ac.rw.parkinkslotManagement.model.Reservation;
 import auca.ac.rw.parkinkslotManagement.model.ReservationStatus;
+import auca.ac.rw.parkinkslotManagement.model.User;
 import auca.ac.rw.parkinkslotManagement.model.VehicleType;
 import auca.ac.rw.parkinkslotManagement.repository.FacilityRepository;
 import auca.ac.rw.parkinkslotManagement.repository.ParkingSlotRepository;
@@ -42,16 +45,18 @@ public class AdminService {
     private final ReservationRepository reservations;
     private final UserRepository users;
     private final AvailabilityService availability;
+    private final OperationsLog ops;
     private final Clock clock;
 
     public AdminService(
             FacilityRepository facilities, ParkingSlotRepository slots, ReservationRepository reservations,
-            UserRepository users, AvailabilityService availability, Clock clock) {
+            UserRepository users, AvailabilityService availability, OperationsLog ops, Clock clock) {
         this.facilities = facilities;
         this.slots = slots;
         this.reservations = reservations;
         this.users = users;
         this.availability = availability;
+        this.ops = ops;
         this.clock = clock;
     }
 
@@ -171,7 +176,7 @@ public class AdminService {
         if (!fields.isEmpty()) throw ApiException.fields(fields);
     }
 
-    public Map<String, Object> createFacility(Map<String, Object> body) {
+    public Map<String, Object> createFacility(Long uid, Map<String, Object> body) {
         Facility f = new Facility();
         applyFacility(f, body, true);
         String base = slugify(f.getName());
@@ -181,12 +186,15 @@ public class AdminService {
         f.setCode(code);
         f.setActive(true);
         facilities.save(f);
+        audit(uid, AuditEvent.FACILITY_CREATED, "facility:" + f.getCode(), f.getName(),
+                Map.of("name", f.getName(), "city", f.getCity(), "type", f.getType(), "rate", f.getRate()));
         return Map.of("facility", facilityJson(f, List.of(), 0));
     }
 
-    public Map<String, Object> updateFacility(String code, Map<String, Object> body) {
+    public Map<String, Object> updateFacility(Long uid, String code, Map<String, Object> body) {
         Facility f = facility(code);
         boolean wasActive = f.isActive();
+        int oldRate = f.getRate();
         applyFacility(f, body, false);
         if (Body.has(body, "active")) {
             boolean active = Boolean.parseBoolean(Body.str(body, "active"));
@@ -199,10 +207,12 @@ public class AdminService {
             }
             f.setActive(active);
         }
+        audit(uid, AuditEvent.FACILITY_UPDATED, "facility:" + f.getCode(), f.getName(),
+                changes(body, Map.of("rateWas", oldRate, "rateNow", f.getRate(), "activeWas", wasActive, "activeNow", f.isActive())));
         return Map.of("facility", facilityJson(f));
     }
 
-    public Map<String, Object> deleteFacility(String code) {
+    public Map<String, Object> deleteFacility(Long uid, String code) {
         Facility f = facility(code);
         if (users.countByAssignedFacility(f) > 0) {
             throw ApiException.conflict("An attendant is assigned to this facility. Reassign them first.");
@@ -212,6 +222,8 @@ public class AdminService {
         }
         slots.deleteByFacility(f);
         facilities.delete(f);
+        audit(uid, AuditEvent.FACILITY_DELETED, "facility:" + code, f.getName(),
+                Map.of("name", f.getName(), "city", f.getCity()));
         return Map.of("ok", true);
     }
 
@@ -287,7 +299,7 @@ public class AdminService {
         s.setVehicleType(type);
     }
 
-    public Map<String, Object> createSlot(Map<String, Object> body) {
+    public Map<String, Object> createSlot(Long uid, Map<String, Object> body) {
         Facility f = facilities.findByCode(Body.str(body, "facilityId"))
                 .orElseThrow(() -> ApiException.fields(Map.of("facilityId", "Choose a facility.")));
         ParkingSlot s = new ParkingSlot();
@@ -295,6 +307,8 @@ public class AdminService {
         s.setActive(true);
         applySlot(s, body, true);
         slots.save(s);
+        audit(uid, AuditEvent.SLOT_CREATED, "slot:" + s.getSlotId(), f.getName(),
+                Map.of("level", s.getLevel(), "slot", s.getSlotNumber(), "vehicleType", s.getVehicleType().label()));
         return Map.of("slot", slotJson(s));
     }
 
@@ -302,7 +316,7 @@ public class AdminService {
         return slots.findById(id).orElseThrow(() -> ApiException.notFound("Slot not found."));
     }
 
-    public Map<String, Object> updateSlot(Long id, Map<String, Object> body) {
+    public Map<String, Object> updateSlot(Long uid, Long id, Map<String, Object> body) {
         ParkingSlot s = slot(id);
         LocalDateTime now = now();
         List<Reservation> upcoming = reservations.findUpcomingAtSlot(s, now);
@@ -322,16 +336,20 @@ public class AdminService {
         }
         applySlot(s, body, false);
         if (Body.has(body, "active")) s.setActive(Boolean.parseBoolean(Body.str(body, "active")));
+        audit(uid, AuditEvent.SLOT_UPDATED, "slot:" + s.getSlotId(), s.getFacility().getName(),
+                changes(body, Map.of("level", s.getLevel(), "slot", s.getSlotNumber(), "active", s.isActive())));
         return Map.of("slot", slotJson(s));
     }
 
-    public Map<String, Object> deleteSlot(Long id) {
+    public Map<String, Object> deleteSlot(Long uid, Long id) {
         ParkingSlot s = slot(id);
         long upcoming = reservations.countUpcomingAtSlot(s, now());
         if (upcoming > 0) {
             throw ApiException.conflict(s.getSlotNumber() + " has " + upcoming + " upcoming reservation(s). Cancel them first.");
         }
         slots.delete(s);
+        audit(uid, AuditEvent.SLOT_DELETED, "slot:" + id, s.getFacility().getName(),
+                Map.of("level", s.getLevel(), "slot", s.getSlotNumber()));
         return Map.of("ok", true);
     }
 
@@ -363,7 +381,7 @@ public class AdminService {
         return out;
     }
 
-    public Map<String, Object> cancel(String serial) {
+    public Map<String, Object> cancel(Long uid, String serial) {
         LocalDateTime now = now();
         Reservation r;
         try {
@@ -378,6 +396,8 @@ public class AdminService {
             throw ApiException.conflict("The car is parked. The attendant must release the slot first.");
         }
         r.setStatus(ReservationStatus.CANCELLED);
+        audit(uid, AuditEvent.RESERVATION_CANCELLED, "reservation:" + r.serial(), r.getFacility().getName(),
+                Map.of("driver", r.getUser().getEmail(), "plate", r.getVehiclePlate(), "start", r.getStartTime().toString()));
         return Map.of("reservation", Views.reservation(r, now));
     }
 
@@ -453,5 +473,64 @@ public class AdminService {
         out.put("rows", rows);
         out.put("total", total);
         return out;
+    }
+
+    // ---- audit (MongoDB) -------------------------------------------------------------
+
+    /**
+     * Records a staff action in the operations log. Deliberately not transactional
+     * with the change it describes: Mongo isn't in the JPA transaction, and an
+     * unreachable log database must not roll back an admin's work.
+     */
+    private void audit(Long uid, String action, String target, String facility, Map<String, Object> details) {
+        User actor = uid == null ? null : users.findById(uid).orElse(null);
+        ops.audit(action, uid,
+                actor == null ? null : actor.getEmail(),
+                actor == null ? null : actor.getRole().name(),
+                target, facility, details);
+    }
+
+    /** Which fields the request actually touched, plus the resulting values. */
+    private static Map<String, Object> changes(Map<String, Object> body, Map<String, Object> after) {
+        Map<String, Object> m = new LinkedHashMap<>(after);
+        m.put("fieldsSubmitted", new ArrayList<>(body.keySet()));
+        return m;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> auditLog(String action, String facility, int limit) {
+        List<Map<String, Object>> rows = ops.recentAudit(action, facility, limit).stream()
+                .map(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("at", e.at() == null ? null : e.at().toString());
+                    m.put("action", e.action());
+                    m.put("actor", e.actorEmail());
+                    m.put("role", e.actorRole());
+                    m.put("target", e.target());
+                    m.put("facility", e.facility());
+                    m.put("details", e.details());
+                    return m;
+                })
+                .toList();
+        return Map.of("events", rows, "limit", limit);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> notifications(String serial, int limit) {
+        List<Map<String, Object>> rows = ops.recentNotifications(serial, limit).stream()
+                .map(n -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("at", n.at() == null ? null : n.at().toString());
+                    m.put("channel", n.channel());
+                    m.put("event", n.routingKey());
+                    m.put("serial", n.serial());
+                    m.put("to", n.recipient());
+                    m.put("subject", n.subject());
+                    m.put("body", n.body());
+                    m.put("characters", n.characters());
+                    return m;
+                })
+                .toList();
+        return Map.of("notifications", rows, "limit", limit);
     }
 }

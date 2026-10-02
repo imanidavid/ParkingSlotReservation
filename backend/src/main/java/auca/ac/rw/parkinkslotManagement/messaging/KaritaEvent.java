@@ -16,6 +16,9 @@ public sealed interface KaritaEvent {
     /** Who to reach. */
     String email();
 
+    /** The reservation this is about, zero-padded. */
+    String serial();
+
     record ReservationConfirmed(
             String eventId,
             String occurredAt,
