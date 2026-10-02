@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Browse facilities · Karita</title>
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap"
+    />
+
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/app.css" />
+    <link rel="stylesheet" href="styles/browse.css" />
+
+    <script src="scripts/theme.js"></script>
+  </head>
+  <body>
+    <header class="appbar" data-appbar data-active="browse"></header>
+
+    <main class="browse">
+      <h1 class="sr-only">Browse facilities</h1>
+
+      <form class="rail" id="filters" aria-label="Filters">
+        <fieldset class="rail__group">
+          <legend class="rail__label">Facility type</legend>
+          <label class="check"><input type="checkbox" name="type" value="Campus" /> Campus</label>
+          <label class="check"><input type="checkbox" name="type" value="Office" /> Office</label>
+          <label class="check"><input type="checkbox" name="type" value="Mall" /> Mall</label>
+          <label class="check"><input type="checkbox" name="type" value="Public" /> Public</label>
+        </fieldset>
+
+        <fieldset class="rail__group">
+          <legend class="rail__label">Vehicle type</legend>
+          <label class="check"><input type="checkbox" name="vehicle" value="Car" /> Car</label>
+          <label class="check"><input type="checkbox" name="vehicle" value="Motorcycle" /> Motorcycle</label>
+          <label class="check"><input type="checkbox" name="vehicle" value="SUV" /> SUV</label>
+          <label class="check"><input type="checkbox" name="vehicle" value="Truck" /> Truck</label>
+        </fieldset>
+
+        <fieldset class="rail__group">
+          <legend class="rail__label">Duration</legend>
+          <label class="check"><input type="radio" name="duration" value="1h" checked /> 1h</label>
+          <label class="check"><input type="radio" name="duration" value="2h" /> 2h</label>
+          <label class="check"><input type="radio" name="duration" value="4h" /> 4h</label>
+          <label class="check"><input type="radio" name="duration" value="8h" /> 8h</label>
+          <label class="check"><input type="radio" name="duration" value="day" /> Full day</label>
+        </fieldset>
+
+        <div class="rail__group">
+          <label class="rail__label" for="filter-date">Date</label>
+          <input class="input mono" type="date" id="filter-date" name="date" />
+        </div>
+
+        <div class="rail__group rail__group--reset">
+          <a class="link" href="browse.html" id="filters-reset">Reset</a>
+        </div>
+      </form>
+
+      <section class="results" aria-labelledby="results-summary">
+        <div class="results__bar">
+          <p class="results__summary" id="results-summary" aria-live="polite">Loading…</p>
+          <label class="sort">
+            <span>Sort:</span>
+            <span class="sort__control">
+              <select id="sort" name="sort">
+                <option value="availability">Availability</option>
+                <option value="rate">Rate</option>
+                <option value="name">Name</option>
+              </select>
+              <span aria-hidden="true">▾</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table table--browse">
+            <thead>
+              <tr>
+                <th scope="col">Facility</th>
+                <th scope="col" class="col-location">Address</th>
+                <th scope="col" class="num col-total">Total slots</th>
+                <th scope="col" class="num" id="available-heading">Available now</th>
+                <th scope="col" class="num">Rates from</th>
+                <th scope="col"><span class="sr-only">Action</span></th>
+              </tr>
+            </thead>
+            <tbody id="results-body"></tbody>
+          </table>
+        </div>
+
+        <p class="empty" id="results-empty" hidden>
+          No facilities match these filters.
+          <a class="link" href="browse.html">Reset</a>
+        </p>
+      </section>
+    </main>
+
+    <script src="scripts/karita.js"></script>
+    <script src="scripts/browse.js"></script>
+  </body>
+</html>

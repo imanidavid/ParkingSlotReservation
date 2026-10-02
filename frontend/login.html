@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign in · Karita</title>
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap"
+    />
+
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/auth.css" />
+
+    <script src="scripts/theme.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <div class="theme-toggle" role="group" aria-label="Colour theme">
+          <button type="button" data-set-theme="light" aria-pressed="true">Light</button>
+          <span aria-hidden="true">/</span>
+          <button type="button" data-set-theme="dark" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="auth">
+      <section class="auth__panel" aria-labelledby="signin-title">
+        <div class="auth__head">
+          <p class="wordmark">KARITA</p>
+          <span class="wordmark__serial mono">№ 0001</span>
+        </div>
+
+        <hr class="rule" />
+
+        <div class="auth__body">
+          <h1 class="auth__title" id="signin-title">Sign in</h1>
+
+          <form class="auth__form" id="signin-form" novalidate>
+            <div class="field">
+              <label class="field__label" for="email">Email</label>
+              <input
+                class="input"
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                inputmode="email"
+                spellcheck="false"
+                aria-describedby="email-error"
+                required
+              />
+              <span class="field__error" id="email-error" role="alert"></span>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="password">Password</label>
+              <div class="field__control">
+                <input
+                  class="input input--with-action"
+                  id="password"
+                  name="password"
+                  type="password"
+                  autocomplete="current-password"
+                  aria-describedby="password-error"
+                  required
+                />
+                <button
+                  class="input-action"
+                  id="password-toggle"
+                  type="button"
+                  aria-controls="password"
+                  aria-pressed="false"
+                  aria-label="Show password"
+                >Show</button>
+              </div>
+              <span class="field__error" id="password-error" role="alert"></span>
+            </div>
+
+            <p class="auth__status" id="signin-status" role="status" aria-live="polite"></p>
+
+            <button class="btn btn--primary btn--block" type="submit">Sign in</button>
+          </form>
+
+          <!-- Filled in by login.js only when a provider is configured. -->
+          <div class="federated" id="federated" hidden>
+            <p class="federated__divider"><span>or</span></p>
+            <div id="federated-buttons"></div>
+          </div>
+        </div>
+
+        <hr class="rule" />
+
+        <p class="auth__foot">
+          New here? <a class="link" href="register.html">Register</a>
+        </p>
+      </section>
+    </main>
+
+    <script src="scripts/login.js"></script>
+  </body>
+</html>

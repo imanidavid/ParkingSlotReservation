@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Register · Karita</title>
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap"
+    />
+
+    <!-- External CSS: shared tokens, base and auth panel -->
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/auth.css" />
+
+    <!-- Internal CSS: rules only this page uses -->
+    <style>
+      .auth__panel--wide {
+        max-width: 460px;
+      }
+
+      .register__vehicle .chips {
+        grid-auto-flow: column;
+      }
+
+      .register__vehicle .chip {
+        height: 38px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+      }
+
+      .field__hint {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--ink-muted);
+      }
+
+      .input--plate {
+        text-transform: uppercase;
+      }
+    </style>
+
+    <script src="scripts/theme.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar__inner">
+        <div class="theme-toggle" role="group" aria-label="Colour theme">
+          <button type="button" data-set-theme="light" aria-pressed="true">Light</button>
+          <span aria-hidden="true">/</span>
+          <button type="button" data-set-theme="dark" aria-pressed="false">Dark</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="auth">
+      <section class="auth__panel auth__panel--wide" aria-labelledby="register-title">
+        <div class="auth__head">
+          <p class="wordmark">KARITA</p>
+          <span class="wordmark__serial mono">№ 0001</span>
+        </div>
+
+        <hr class="rule" />
+
+        <div class="auth__body">
+          <h1 class="auth__title" id="register-title">Register</h1>
+
+          <form class="auth__form" id="register-form" novalidate>
+            <div class="field">
+              <label class="field__label" for="fullName">Full name</label>
+              <input class="input" id="fullName" name="fullName" autocomplete="name" maxlength="80" aria-describedby="fullName-error" required />
+              <span class="field__error" id="fullName-error" role="alert"></span>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="email">Email</label>
+              <input class="input" id="email" name="email" type="email" autocomplete="email" inputmode="email" spellcheck="false" maxlength="120" aria-describedby="email-error" required />
+              <span class="field__error" id="email-error" role="alert"></span>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="password">Password</label>
+              <div class="field__control">
+                <input class="input input--with-action" id="password" name="password" type="password" autocomplete="new-password" maxlength="128" aria-describedby="password-hint password-error" required />
+                <button class="input-action" id="password-toggle" type="button" aria-controls="password" aria-pressed="false" aria-label="Show password">Show</button>
+              </div>
+              <span class="field__hint" id="password-hint">At least 8 characters, with letters and a number.</span>
+              <span class="field__error" id="password-error" role="alert"></span>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="plate">Vehicle plate</label>
+              <input class="input mono input--plate" id="plate" name="plate" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="RAD 482 C" maxlength="12" aria-describedby="plate-error" required />
+              <span class="field__error" id="plate-error" role="alert"></span>
+            </div>
+
+            <fieldset class="field register__vehicle" style="border: 0; margin: 0; padding: 0; min-width: 0;">
+              <legend class="field__label" style="padding: 0; margin-bottom: 6px;">Vehicle type</legend>
+              <div class="chips" id="vehicle-chips">
+                <input class="chip__input" type="radio" name="vehicle" id="v-moto" value="Motorcycle" />
+                <label class="chip" for="v-moto">MOTORCYCLE</label>
+                <input class="chip__input" type="radio" name="vehicle" id="v-car" value="Car" checked />
+                <label class="chip" for="v-car">CAR</label>
+                <input class="chip__input" type="radio" name="vehicle" id="v-suv" value="SUV" />
+                <label class="chip" for="v-suv">SUV</label>
+                <input class="chip__input" type="radio" name="vehicle" id="v-truck" value="Truck" />
+                <label class="chip" for="v-truck">TRUCK</label>
+              </div>
+              <span class="field__error" id="vehicle-error" role="alert"></span>
+            </fieldset>
+
+            <p class="auth__status" id="register-status" role="status" aria-live="polite"></p>
+
+            <button class="btn btn--primary btn--block" type="submit">Create account</button>
+          </form>
+        </div>
+
+        <hr class="rule" />
+
+        <p class="auth__foot">
+          Already registered? <a class="link" href="login.html">Sign in</a>
+        </p>
+      </section>
+    </main>
+
+    <script src="scripts/register.js"></script>
+  </body>
+</html>

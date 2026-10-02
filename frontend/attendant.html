@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verify · Karita</title>
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap"
+    />
+
+    <link rel="stylesheet" href="styles/tokens.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/app.css" />
+    <link rel="stylesheet" href="styles/attendant.css" />
+
+    <script src="scripts/theme.js"></script>
+  </head>
+  <body>
+    <header class="appbar" data-appbar data-nav="attendant" data-active="verify"></header>
+
+    <main class="desk">
+      <h1 class="sr-only">Attendant desk</h1>
+
+      <section id="verify" aria-labelledby="verify-label">
+        <h2 class="section-label" id="verify-label">Verify reservation</h2>
+
+        <form class="lookup" id="lookup" novalidate>
+          <label class="lookup__label" for="lookup-input" id="lookup-label">Plate number</label>
+          <input
+            class="lookup__input"
+            id="lookup-input"
+            name="plate"
+            placeholder="RAD 482 C"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            aria-describedby="lookup-error"
+          />
+          <span class="field__error" id="lookup-error"></span>
+          <div class="lookup__actions">
+            <button class="btn btn--primary lookup__btn" type="submit" id="lookup-btn">Verify</button>
+            <button class="linkbtn lookup__mode" type="button" id="lookup-mode">Search by slot number instead</button>
+          </div>
+        </form>
+
+        <div class="result" id="result" aria-live="polite"></div>
+      </section>
+
+      <section id="today" aria-labelledby="today-label">
+        <h2 class="section-label" id="today-label">
+          <span>Today at this facility</span>
+          <span class="section-label__count" id="today-count"></span>
+        </h2>
+        <div class="table-wrap">
+          <table class="table table--today" id="today-table">
+            <thead>
+              <tr>
+                <th scope="col">Window</th>
+                <th scope="col">Slot</th>
+                <th scope="col">Plate</th>
+                <th scope="col">Payment</th>
+                <th scope="col">State</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="today-body"></tbody>
+          </table>
+        </div>
+        <p class="empty" id="today-empty" hidden>No reservations today at this facility.</p>
+      </section>
+
+      <section id="board" aria-labelledby="board-label">
+        <h2 class="section-label" id="board-label">
+          <span>Live board <span id="board-facility"></span></span>
+          <span class="section-label__count" id="board-asof"></span>
+        </h2>
+        <p class="board__counts" id="board-counts" aria-live="polite">&nbsp;</p>
+        <div class="board" id="board-levels" aria-label="Slots by status"></div>
+        <ul class="legend board__legend" aria-label="Legend">
+          <li class="legend__item"><span class="legend__swatch bcell--available" aria-hidden="true"></span>Available</li>
+          <li class="legend__item"><span class="legend__swatch bcell--reserved" aria-hidden="true"></span>Reserved</li>
+          <li class="legend__item"><span class="legend__swatch bcell--occupied" aria-hidden="true"></span>Occupied</li>
+          <li class="legend__item"><span class="legend__swatch bcell--inactive" aria-hidden="true"></span>Out of service</li>
+        </ul>
+        <p class="sample-note" id="board-sample" hidden>Includes sample traffic for demonstration.</p>
+      </section>
+    </main>
+
+    <script src="scripts/karita.js"></script>
+    <script src="scripts/attendant.js"></script>
+  </body>
+</html>
