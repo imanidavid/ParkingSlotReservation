@@ -134,6 +134,7 @@ number and a way to check it.
 | **Reliability** — no double-booking | **Zero** overlapping confirmed bookings on one bay, under concurrent load | PostgreSQL `EXCLUDE USING gist` constraint; a DB-level violation is raised even if application code is bypassed | **Met** — enforced and test-covered |
 | **Reliability** — durability | Data survives restart; only sessions are lost | Restart check in the browser suite | **Met** |
 | **Security** — credentials at rest | PBKDF2-HMAC-SHA256, **≥ 200,000** iterations, per-user random salt | `PasswordHasher` — currently 210,000 | **Met** |
+| **Security** — federated sign-in | OAuth2/OIDC authorisation code flow with `state`, `nonce` and PKCE (S256); **0** role changes from signing in via a provider | Spring Security `oauth2-client`; account linked by verified email, never replaced | **Met** — test-covered |
 | **Security** — brute force | Sign-in throttled to **10 failures** per email+IP per **15 min**, then `429` | `LoginThrottle` | **Met** |
 | **Security** — isolation | **0** cross-tenant reads: an attendant reaching another facility's data gets 403/404 in 100% of attempts | Role checks plus per-resource ownership checks | **Met** — test-covered |
 | **Usability** — booking effort | A signed-in driver reaches a confirmed booking in **≤ 4 screens** and **≤ 8 fields** | Walkthrough: home → facility → bay → pay | **Met** |

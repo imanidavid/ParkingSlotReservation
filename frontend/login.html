@@ -87,6 +87,12 @@
 
             <button class="btn btn--primary btn--block" type="submit">Sign in</button>
           </form>
+
+          <!-- Filled in by login.js only when a provider is configured. -->
+          <div class="federated" id="federated" hidden>
+            <p class="federated__divider"><span>or</span></p>
+            <div id="federated-buttons"></div>
+          </div>
         </div>
 
         <hr class="rule" />

@@ -66,6 +66,9 @@ Admin views add `user` (email) and `state`.
 | `POST /api/auth/register` | `{ fullName, email, password, plate, vehicle }` | `201` like login; `400`/`409` with `fields` |
 | `GET /api/auth/me` | | `{ fullName, email, role, plate, vehicle, facility }` (`facility` = attendant's facility name) |
 | `GET /logout` | | ends the session, `302 → /login.html` |
+| `GET /api/auth/providers` | | `{ providers: [{ id, name, url }] }` — federated sign-in options; empty when none configured. No session required. |
+| `GET /oauth2/authorization/{id}` | | starts the OAuth2 flow (`302` to the provider, with `state`, `nonce` and PKCE) |
+| `GET /login/oauth2/code/{id}` | | provider callback; on success creates the normal session and `302`s to the role's home page |
 
 Register rules: fullName 2–80; valid email ≤120, unique; password 8–128 with a
 letter and a digit; plate 4–12 of A–Z/0–9/space with a digit; vehicle type.

@@ -238,7 +238,59 @@ action or facility) and `GET /api/admin/notifications` (filterable by
 reservation). Running without MongoDB is supported: `karita.audit.enabled=false`
 swaps in a no-op log, which is what the test profile uses.
 
-## 7. Frontend
+## 7. Authentication
+
+Two ways in, one session out.
+
+**Password sign-in** is the original: PBKDF2-HMAC-SHA256 at 210,000 iterations
+with a per-user random salt, constant-time comparison, and a dummy hash compared
+against when the email is unknown so response timing doesn't reveal which
+addresses have accounts. Sign-in rotates the session id (no fixation), the cookie
+is HttpOnly and SameSite=Lax, and repeated failures are throttled to ten per
+email and IP per fifteen minutes.
+
+**Google sign-in** is OAuth2 / OpenID Connect via Spring Security's
+`oauth2-client`. The authorisation request carries `state`, `nonce` and a PKCE
+`code_challenge` (S256) — all of which Spring Boot's Google provider sets up by
+default, and all of which matter: `state` ties the callback to the browser that
+started it, `nonce` to the session, and PKCE stops an intercepted authorisation
+code being redeemed by anyone else.
+
+The important design decision is what happens *after* the handshake.
+
+Spring Security is deliberately not the authorization system here. It runs with
+`anyRequest().permitAll()`, and its CSRF, form login, HTTP Basic and logout are
+all disabled. Access control stays with `OriginCheckFilter`, `PageAccessFilter`
+and `ApiAuthInterceptor`, which already run ahead of the Spring Security chain
+and already understand this application's roles and per-resource ownership. Two
+systems answering the same question is two systems that will eventually
+disagree, and the one that disagrees quietly is the one that lets someone in.
+
+So `OAuth2SuccessHandler` ends the Spring Security story: it reads the verified
+email, clears Spring's `SecurityContext`, and mints exactly the same
+`HttpSession` a password login produces. Every filter, role check and ownership
+rule downstream behaves identically regardless of how someone signed in.
+
+`FederatedLoginService` links the identity by email, which is the only identifier
+both sides share. An existing account is looked up, never replaced — so an admin
+whose account email matches their Google address signs in through Google and
+keeps being an admin, and nobody gains or loses a role by changing door. Only
+genuinely new people are created, always as drivers. Two guards worth naming: an
+address Google reports as unverified is rejected, because otherwise someone could
+claim another person's account by typing their address into a fresh profile; and
+a federated account gets an unguessable random password hash rather than a shared
+placeholder, which would be one credential across every such account.
+
+**Configuration.** Google sign-in switches itself on only when a client
+registration exists, and the credentials deliberately aren't in
+`application.properties` — an empty `client-id` doesn't disable a registration,
+it fails validation and stops the application starting. Copy
+`backend/oauth.properties.example` to `backend/oauth.properties` (git-ignored)
+and fill in the two values; the app imports it optionally, so with no file the
+button simply doesn't appear and password sign-in carries on. The authorised
+redirect URI is `http://localhost:8080/login/oauth2/code/google`.
+
+## 8. Frontend
 
 Ten pages of plain HTML, CSS and ES modules. No framework, no bundler, no
 `node_modules` — the backend serves `frontend/` as static files from the same
@@ -257,11 +309,11 @@ and I'm not going to pretend otherwise.
 
 ---
 
-## 8. Testing
+## 9. Testing
 
-Thirty-six automated checks, all green at the time of writing.
+Forty-three automated checks, all green at the time of writing.
 
-Thirteen MockMvc integration tests run the real Spring context against a real
+Fourteen MockMvc integration tests run the real Spring context against a real
 PostgreSQL (`karita_test`), covering auth, the reservation lifecycle, payment
 branches, role enforcement and the double-booking constraint. Four messaging
 tests publish through a live broker and read the result back off a throwaway
@@ -271,25 +323,24 @@ answers on the AMQP port, so the suite stays green on a machine without
 RabbitMQ. Five more exercise the MongoDB operations log — that audit details
 keep whatever shape the action needs, that email and SMS records coexist in one
 collection, and that both are filterable — skipping likewise when no Mongo server
-answers. Fourteen end-to-end checks drive headless Chrome against a freshly
+answers. Six OAuth2 tests cover the authorisation redirect (asserting `state`, the
+client id and the scopes), the providers endpoint in both configured and
+unconfigured states, and the account-linking rules — that an existing admin keeps
+their role, that federated accounts get distinct unusable passwords, and that a
+missing name falls back to the email local part. Fourteen end-to-end checks drive
+headless Chrome against a freshly
 built jar — real clicks, real forms, real redirects — including two robustness
 cases most suites skip: server restart mid-session, and server down entirely.
 
 ```
-npm run test:backend   # 22 passed (13 API + 4 messaging + 5 operations log)
+npm run test:backend   # 29 passed (14 API + 4 messaging + 5 ops log + 6 OAuth2)
 npm test               # 14 passed
 ```
 
 ---
 
-## 9. Gaps against the brief
+## 10. Gaps against the brief
 
 Stated plainly, because a grader will find them anyway:
-
-**OAuth2 is absent.** Authentication is a hand-rolled session scheme — PBKDF2 at
-210,000 iterations, random per-user salt, constant-time compare, a dummy hash so
-timing doesn't leak which emails exist, session-id rotation on sign-in, HttpOnly
-+ SameSite=Lax, login throttling. It's sound, and it's still not OAuth2, and the
-brief named OAuth2.
 
 **No frontend framework**, as above.

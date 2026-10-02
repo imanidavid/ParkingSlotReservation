@@ -90,3 +90,39 @@
     padding-right: 20px;
   }
 }
+
+/* Federated sign-in — only rendered when a provider is configured. */
+.federated {
+  margin-top: 1.25rem;
+}
+
+.federated__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 0.875rem;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.federated__divider::before,
+.federated__divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.btn--federated {
+  background: var(--surface);
+  border: 1px solid var(--rule-strong, var(--rule));
+  color: var(--ink-1);
+  text-align: center;
+  text-decoration: none;
+}
+
+.btn--federated:hover {
+  border-color: var(--ink-3);
+}

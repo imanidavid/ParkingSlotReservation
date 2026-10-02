@@ -22,7 +22,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(apiAuth)
                 .addPathPatterns("/api/**")
-                .excludePathPatterns("/api/auth/login", "/api/auth/register");
+                .excludePathPatterns("/api/auth/login", "/api/auth/register", "/api/auth/providers");
     }
 
     /** "Now" for every rule; tests can replace it with a fixed clock. */

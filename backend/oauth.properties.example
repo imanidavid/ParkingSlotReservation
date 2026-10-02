@@ -1,0 +1,11 @@
+# Copy to backend/oauth.properties and fill in. That file is git-ignored.
+#
+# Google Cloud console → APIs & Services → Credentials → OAuth client ID
+#   Application type:          Web application
+#   Authorised redirect URI:   http://localhost:8080/login/oauth2/code/google
+#
+# Scopes and endpoints come from Spring Boot's built-in Google provider, so the
+# client id and secret are all that's needed here.
+
+spring.security.oauth2.client.registration.google.client-id=YOUR_CLIENT_ID.apps.googleusercontent.com
+spring.security.oauth2.client.registration.google.client-secret=YOUR_CLIENT_SECRET

@@ -71,6 +71,23 @@ a restart only ends sessions (pages send you to sign-in with a "session ended" n
 
 To start over with fresh demo data: `DROP DATABASE karita; CREATE DATABASE karita;`.
 
+## Google sign-in (optional)
+
+Off until you give it credentials, because an empty client id stops Spring Boot
+starting rather than disabling anything.
+
+```
+cp backend/oauth.properties.example backend/oauth.properties
+# then paste your client id and secret into that file (it's git-ignored)
+```
+
+Create the client in the Google Cloud console under APIs & Services →
+Credentials → OAuth client ID, type **Web application**, with authorised redirect
+URI `http://localhost:8080/login/oauth2/code/google`.
+
+With no such file the "Continue with Google" button simply doesn't render and
+password sign-in works as before.
+
 ## Demo accounts
 
 Password for all: `karita123`
@@ -89,7 +106,7 @@ attendant records it, card `4000 0000 0000 0002` always declines.
 ## Tests
 
 ```
-npm run test:backend   # 22 tests: 13 API (MockMvc) + 4 messaging + 5 operations log
+npm run test:backend   # 29 tests: 14 API + 4 messaging + 5 operations log + 6 OAuth2
 npm test               # 14 browser checks: builds the jar, runs it on karita_test
 npm run test:all
 ```
@@ -108,6 +125,9 @@ each start. Don't run them at the same time (they share that database).
   `frontend/scripts/karita.js`.
 - **Sessions:** server-side `HttpSession`, cookie `KARITA_SESSION` (HttpOnly,
   SameSite=Lax), 8-hour timeout, new session id at sign-in.
+- **Sign-in:** password (PBKDF2, 210k iterations) or Google via OAuth2/OIDC with
+  PKCE. Both end in the same session, so everything downstream is identical —
+  see `docs/ARCHITECTURE.md §7`.
 - **Errors:** always `{ "error", "field"?, "fields"? }`. `401` → the page sends
   you to sign-in and back; `fields`/`field` land under the matching input.
 - **Page access:** `PageAccessFilter` sends each role to its own pages and adds

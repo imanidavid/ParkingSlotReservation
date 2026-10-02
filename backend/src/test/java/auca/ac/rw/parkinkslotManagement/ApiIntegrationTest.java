@@ -57,6 +57,15 @@ class ApiIntegrationTest {
     static final LocalDate TODAY = LocalDate.now(KIGALI);
     static final MutableClock CLOCK = new MutableClock(TODAY.atTime(10, 0).atZone(KIGALI).toInstant(), KIGALI);
 
+    /** With no client registration configured, the page must show no button. */
+    @Test
+    void a0_providersIsEmptyWhenOAuthIsNotConfigured() throws Exception {
+        mvc.perform(get("/api/auth/providers"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.providers").isArray())
+                .andExpect(jsonPath("$.providers").isEmpty());
+    }
+
     @TestConfiguration
     static class FixedClock {
         @Bean

@@ -19,6 +19,31 @@
   if (params.get("reason") === "expired") {
     status.textContent = "Your session ended (the server restarted or you were away too long). Sign in again.";
   }
+  if (params.get("error")) {
+    status.textContent = params.get("error");
+  }
+
+  // Google sign-in is optional: the button only appears when the server says a
+  // provider is configured, so an unconfigured deployment shows nothing broken.
+  (function federatedSignIn() {
+    var wrap = document.getElementById("federated");
+    var slot = document.getElementById("federated-buttons");
+    if (!wrap || !slot) return;
+    fetch("/api/auth/providers", { credentials: "same-origin" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data || !data.providers || !data.providers.length) return;
+        data.providers.forEach(function (p) {
+          var a = document.createElement("a");
+          a.className = "btn btn--block btn--federated";
+          a.href = p.url + (safeNext() ? "?next=" + encodeURIComponent(safeNext()) : "");
+          a.textContent = "Continue with " + p.name;
+          slot.appendChild(a);
+        });
+        wrap.hidden = false;
+      })
+      .catch(function () { /* no providers shown; password sign-in still works */ });
+  })();
 
   function setError(input, message) {
     var slot = document.getElementById(input.id + "-error");

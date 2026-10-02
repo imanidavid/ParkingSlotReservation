@@ -16,3 +16,7 @@ node_modules/
 
 # OS
 .DS_Store
+
+# OAuth2 client credentials (copy from backend/oauth.properties.example)
+backend/oauth.properties
+oauth.properties
