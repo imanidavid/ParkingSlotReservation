@@ -8,9 +8,25 @@ reservations and revenue.
 ```
 frontend/   pages (HTML), styles/, scripts/ — plain HTML/CSS/JS, no build step
 backend/    Spring Boot 4 + JPA/Hibernate + PostgreSQL; serves frontend/ and /api
-docs/API.md the API contract between the two
+docs/       the written documentation (see below)
 tests/      end-to-end browser tests (headless Chrome)
 ```
+
+## Documentation
+
+| File | What's in it |
+|---|---|
+| [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) | Problem, users, objectives, scope, three user stories with acceptance criteria, measurable quality targets |
+| [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) | Conceptual domain, entity model, and the physical PostgreSQL schema with keys, indexes and constraints |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Architecture style and rationale, request path, concurrency, performance, testing, and known gaps |
+| [`docs/API.md`](docs/API.md) | The API contract between frontend and backend |
+| `docs/Parking_Slot_Reservation_Phase1_Documentation.docx` | Original Phase 1 submission — see the note below |
+
+> **On the Phase 1 document:** it was written against a JSF + Hibernate prototype
+> that was replaced in commit `15835ee`. Its problem statement, scope, AS-IS/TO-BE
+> models and business requirements still stand. Its architecture (§7) and
+> implementation sections (§10.4–10.7) describe code that no longer exists —
+> `ARCHITECTURE.md` and `DATA-MODEL.md` supersede them.
 
 One server, one origin: http://localhost:8080 serves the pages and the API, so
 the session cookie just works (no CORS).
