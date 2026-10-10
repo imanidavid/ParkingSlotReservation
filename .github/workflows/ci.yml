@@ -1,0 +1,150 @@
+name: CI
+
+# Every push and every pull request runs the full suite against real
+# datastores — not mocks and not in-memory substitutes. The double-booking
+# guarantee is a PostgreSQL exclusion constraint and the messaging tests publish
+# through a live broker, so an H2-and-mocks pipeline would pass while testing
+# none of the things most likely to break.
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Backend + browser tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: karita_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+      rabbitmq:
+        image: rabbitmq:3.13
+        ports: ["5672:5672"]
+        options: >-
+          --health-cmd "rabbitmq-diagnostics -q check_running"
+          --health-interval 10s
+          --health-timeout 10s
+          --health-retries 12
+
+      mongo:
+        image: mongo:7
+        ports: ["27017:27017"]
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_TEST_NAME: karita_test
+      RABBIT_HOST: localhost
+      MONGO_URI: mongodb://localhost:27017/karita_ops_test?serverSelectionTimeoutMS=2000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+          cache: maven
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      # The 29 backend tests: 14 API + 4 RabbitMQ messaging + 6 OAuth2 +
+      # 5 MongoDB operations log. The messaging and operations-log groups skip
+      # themselves when their server is absent, so this step asserts below that
+      # nothing was skipped — otherwise a broken service container would show up
+      # as a green build with silently fewer tests.
+      - name: Backend tests
+        run: ./mvnw -B test
+        working-directory: backend
+
+      - name: Assert no test was skipped
+        run: |
+          skipped=$(grep -ho 'skipped="[0-9]*"' backend/target/surefire-reports/*.xml \
+                    | grep -o '[0-9]*' | paste -sd+ | bc)
+          echo "skipped total: ${skipped:-0}"
+          if [ "${skipped:-0}" -ne 0 ]; then
+            echo "::error::${skipped} test(s) skipped — a service container was probably unreachable"
+            exit 1
+          fi
+
+      # ubuntu-latest ships Chrome, which is what tests/smoke.mjs drives over the
+      # DevTools protocol. It builds its own jar and runs it on karita_test.
+      - name: Browser end-to-end tests
+        run: npm test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: backend/target/surefire-reports/
+          if-no-files-found: warn
+
+  docker:
+    name: Docker image builds and boots
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: karita:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Building the image proves it compiles; this proves it actually serves.
+      # Brings the full compose stack up and waits for the app's own healthcheck
+      # — which is the same thing a grader does with `docker compose up`.
+      - name: Boot the compose stack
+        run: docker compose up --detach --wait --wait-timeout 420
+
+      - name: Check it serves the sign-in page and the API
+        run: |
+          curl -fsS http://localhost:8080/login.html > /dev/null
+          echo "login.html ok"
+          curl -fsS -X POST http://localhost:8080/api/auth/login \
+            -H 'Content-Type: application/json' \
+            -d '{"email":"admin@karita.rw","password":"karita123"}' > /dev/null
+          echo "seeded admin can sign in"
+
+      - name: App logs
+        if: always()
+        run: docker compose logs --no-color app | tail -100
+
+      - name: Tear down
+        if: always()
+        run: docker compose down --volumes

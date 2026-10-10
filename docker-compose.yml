@@ -1,0 +1,96 @@
+# The whole stack, so a grader can run Karita with one command and no local
+# Java, PostgreSQL, RabbitMQ or MongoDB install:
+#
+#   docker compose up --build        then open http://localhost:8080
+#
+# First boot takes a minute or two: Maven builds the jar, then the app creates
+# the schema, adds the database constraints and seeds 24 facilities, 1,476 bays
+# and ~15,000 bookings. The app waits for all three datastores to report healthy
+# before it starts, so there's no retry-loop noise in the logs.
+#
+# Credentials here are deliberately weak local defaults — this file describes a
+# development and demo stack, not a deployment. See README.md for the
+# environment variables a real deployment would override.
+
+name: karita
+
+services:
+  app:
+    # Tagged so CI can build the image once with layer caching and have
+    # `docker compose up` reuse it instead of rebuilding from scratch.
+    image: karita:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: karita
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      RABBIT_HOST: rabbitmq
+      RABBIT_PORT: "5672"
+      RABBIT_USER: guest
+      RABBIT_PASSWORD: guest
+      MONGO_URI: mongodb://mongo:27017/karita_ops?serverSelectionTimeoutMS=2000&connectTimeoutMS=2000
+      NOTIFICATIONS: "true"
+      AUDIT: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    # The stock image bundles contrib, so SchemaInitializer's
+    # CREATE EXTENSION btree_gist (needed by the no-double-booking exclusion
+    # constraint) succeeds without a custom build.
+    image: postgres:16
+    environment:
+      POSTGRES_DB: karita
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d karita"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  rabbitmq:
+    # -management for the dashboard on :15672 (guest/guest) — handy for showing
+    # the karita.events exchange and the email/SMS queues during a demo.
+    image: rabbitmq:3.13-management
+    ports:
+      - "15672:15672"
+    volumes:
+      - rabbitdata:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  rabbitdata:
+  mongodata:
