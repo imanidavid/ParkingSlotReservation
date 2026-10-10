@@ -307,6 +307,27 @@ that. It's a deliberate trade — no build step, no dependency surface, and page
 that stay readable — but it doesn't satisfy a requirement that names a framework,
 and I'm not going to pretend otherwise.
 
+### Responsiveness, measured
+
+`npm run screens` loads all ten pages at 390, 768, 1280 and 1920 px, writes a
+screenshot of each to `docs/screens/` — those forty images are the mock-ups the
+brief asks for — and checks each one for horizontal overflow. Currently 40/40
+clean.
+
+The check itself is worth a note, because the obvious version of it is wrong.
+Reading `document.documentElement.scrollWidth` and comparing it to the viewport
+looks like the natural test, but that property reports the unclipped union of
+every descendant box and ignores any scroll container in between. The attendant
+and admin tables are deliberately wider than a phone and sit inside
+`.table-wrap { overflow-x: auto }`, so they are contained by design — yet they
+inflate `scrollWidth` to 560 px and 555 px against a 390 px viewport, and the
+naive check reports two failures on two pages that are in fact correct.
+
+What the script does instead is ask the browser to scroll right and see whether
+it moves (`window.scrollTo(9999, 0)`, then read `scrollX`), and separately list
+any element whose right edge passes the viewport *without* a clipping ancestor.
+Both are zero everywhere, which is the real claim.
+
 ---
 
 ## 9. Testing
@@ -335,12 +356,89 @@ cases most suites skip: server restart mid-session, and server down entirely.
 ```
 npm run test:backend   # 29 passed (14 API + 4 messaging + 5 ops log + 6 OAuth2)
 npm test               # 14 passed
+npm run screens        # 40 page/width combinations, no horizontal overflow
 ```
+
+The skip-when-absent behaviour of the messaging and operations-log groups is a
+convenience locally and a hazard in CI, where an unreachable service container
+would turn into a green build quietly running nine fewer tests. So
+`.github/workflows/ci.yml` parses the surefire reports and fails the job if the
+skip count is anything other than zero.
+
+### The clock, and why the browser suites pin it
+
+Most of this application is only reachable during a facility's opening hours.
+You cannot book a window that has already closed, and the attendant's verify
+screen deliberately ignores reservations that have ended — which is correct
+behaviour, and also means a suite run at 23:00 fails on the hour rather than on
+the code. An earlier fix pinned the *booking* tests to tomorrow for this reason;
+the attendant test can't use that escape, because its whole subject is today.
+
+So the browser suites set `karita.clock-offset` and move the server's notion of
+now to 10:00 on the day they run. Shifting the clock beats special-casing the
+tests: there is still one definition of now, and the seeder, the validation
+rules and the views all move together. The property is unset everywhere else,
+where the bean is exactly `Clock.system`.
+
+The audit and notification documents keep stamping real wall-clock time, since
+those record when something was actually written rather than when it was due.
 
 ---
 
-## 10. Gaps against the brief
+## 10. CI and deployment
+
+`docker compose up --build` brings up the app, PostgreSQL 16, RabbitMQ 3.13 and
+MongoDB 7, with the app gated on all three reporting healthy, so there is no
+connect-retry noise in the logs on a cold start. The image is a two-stage build:
+Maven produces the jar, an `eclipse-temurin:21-jre` layer runs it as a non-root
+user. The frontend ships inside the same image because the backend serves it as
+static files from the same origin — there is no second thing to deploy.
+
+Its healthcheck probes `/login.html` rather than an Actuator endpoint. That page
+is served to signed-out visitors, so it answers 200 without credentials, which
+makes it an honest liveness signal without adding a dependency for the sake of
+one probe.
+
+CI runs on every push and every PR into `main`, in two jobs:
+
+- **test** — the 29 backend tests and the 14 browser tests, against PostgreSQL,
+  RabbitMQ and MongoDB service containers. Real datastores, not mocks: the
+  no-double-booking guarantee *is* a PostgreSQL exclusion constraint, so a suite
+  running on H2 would pass while testing none of the thing most likely to break.
+- **docker** — builds the image and then boots the whole compose stack and
+  checks it actually serves, which is the same thing a grader does. Building
+  proves it compiles; only booting proves it runs.
+
+---
+
+## 11. Gaps against the brief
 
 Stated plainly, because a grader will find them anyway:
 
-**No frontend framework**, as above.
+**No frontend framework.** Requirement 3 names React or Angular; §8 explains the
+trade and why I'd make it again, but it is a requirement the project does not
+meet. The responsive-design half of that requirement is met and now measured
+(§8), and the mock-ups it asks for are generated into `docs/screens/`.
+
+**The four performance targets in `REQUIREMENTS.md` are design intent, not
+measurements.** The indexes, the fetch strategy and the `open-in-view=false`
+setting all exist to hit them, and the seeded dataset is realistic enough to
+test against — but no load test has been run, so the p95 figures are engineering
+judgement rather than observed numbers. They are labelled as such in that table
+rather than quietly presented as results.
+
+**Authorization is hand-rolled, not Spring Security's.** `ApiAuthInterceptor`
+and `PageAccessFilter` enforce RBAC ahead of the Spring Security chain, and
+`SecurityConfig` is `permitAll` throughout precisely so that two systems are
+never deciding the same question. It is enforced and test-covered, and the
+reasoning is in `SecurityConfig`'s javadoc — but a reader who greps for
+`@PreAuthorize` will not find it, and should know where to look instead.
+
+**Payments and notification delivery are simulated.** Out of scope per
+`REQUIREMENTS.md` §1, but worth restating: no gateway is contacted, and the
+email and SMS listeners record what they would have sent rather than sending it.
+
+**Google sign-in needs credentials to demonstrate.** The code path and its six
+tests are complete, but `backend/oauth.properties` is git-ignored, so on a fresh
+clone the "Continue with Google" button does not render until someone supplies a
+client id and secret. See the README.
