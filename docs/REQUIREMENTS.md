@@ -139,7 +139,7 @@ number and a way to check it.
 | **Security** — isolation | **0** cross-tenant reads: an attendant reaching another facility's data gets 403/404 in 100% of attempts | Role checks plus per-resource ownership checks | **Met** — test-covered |
 | **Usability** — booking effort | A signed-in driver reaches a confirmed booking in **≤ 4 screens** and **≤ 8 fields** | Walkthrough: home → facility → bay → pay | **Met** |
 | **Usability** — error clarity | **100%** of validation errors render against the specific field, in plain language, with input preserved | `{fields}` error envelope | **Met** |
-| **Responsiveness** | No horizontal scroll and no overlap from **390 px** to **1920 px** on all 10 pages | Manual check at 390/768/1280/1920 | **Met** |
+| **Responsiveness** | No horizontal scroll and no overlap from **390 px** to **1920 px** on all 10 pages | `npm run screens` drives all 10 pages at 390/768/1280/1920, asks the browser to scroll sideways at each, and fails if it moves | **Met** — 40/40 combinations clean |
 | **Maintainability** | Layers stay one-directional: `web → service → repository → model` | No repository import in `web/`, no servlet import in `service/` | **Met** |
 
 The honest caveat: the four performance rows marked *design target* are
