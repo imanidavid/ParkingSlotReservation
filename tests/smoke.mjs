@@ -58,7 +58,8 @@ const JAR = buildJar();
 let server;
 
 async function startServer(port) {
-  server = spawn("java", ["-jar", JAR, "--spring.profiles.active=smoke", `--server.port=${port}`], {
+  server = spawn("java", ["-jar", JAR, "--spring.profiles.active=smoke", `--server.port=${port}`,
+    `--karita.clock-offset=${clockOffsetToMorning()}`], {
     cwd: BACKEND,
     stdio: process.env.SHOW_SERVER ? "inherit" : "ignore",
   });
@@ -145,6 +146,23 @@ async function waitFor(expr, label, timeout = 6000) {
 }
 
 let BASE;
+/**
+ * The app is only fully reachable during opening hours (facilities close at
+ * 22:00, and the attendant screen ignores reservations that have ended), so a
+ * suite run late in the evening fails on the clock rather than on the code.
+ * Pin the server's notion of now to 10:00 local on the day it runs, which also
+ * makes the run deterministic whenever it happens.
+ */
+function clockOffsetToMorning(hour = 10) {
+  const now = new Date();
+  // Reinterpret the instant as Kigali wall time, so both sides of the
+  // subtraction live in the same frame and the difference is the real shift.
+  const local = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Kigali" }));
+  const target = new Date(local);
+  target.setHours(hour, 0, 0, 0);
+  return `PT${Math.round((target - local) / 1000)}S`;
+}
+
 /**
  * Tomorrow in Kigali, as yyyy-MM-dd. The booking tests pin a date because the
  * facility page only offers start times that still fit before the 22:00 close —
