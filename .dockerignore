@@ -1,0 +1,11 @@
+# Build output and dependencies are produced inside the image, never copied in.
+node_modules
+frontend/dist
+backend/target
+
+.git
+.github
+docs
+tests
+.claude
+*.md

@@ -1,0 +1,275 @@
+/* My reservations: upcoming stubs with inline reschedule, past table. */
+
+.mine {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px 16px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+/* ---- Upcoming stubs --------------------------------------------------- */
+
+.rstubs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: var(--surface);
+  border: var(--border);
+}
+
+.rstub + .rstub {
+  border-top: var(--border);
+}
+
+.rstub__main {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 24px;
+  padding: 18px 20px 18px 24px;
+  margin-left: 10px;
+  border-left: 1px dashed var(--ink-muted); /* perforation */
+}
+
+.rstub__slot {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.rstub__slot:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.rstub__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.rstub__where {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+}
+
+.rstub__window,
+.rstub__plate {
+  font-size: 14px;
+}
+
+.rstub__side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  text-align: right;
+}
+
+.rstub__links {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: baseline;
+  gap: 4px 8px;
+  font-size: 14px;
+}
+
+.rstub__dot {
+  color: var(--ink-muted);
+}
+
+.rstub__ask {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.rstub__note {
+  margin: 0;
+  max-width: 280px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+/* ---- Reschedule drawer ------------------------------------------------ */
+
+.rstub__drawer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-status) var(--ease);
+}
+
+.rstub__drawer[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.rstub__drawer-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.resched {
+  margin: 0 20px 20px 34px;
+  padding: 18px 20px 20px;
+  background: var(--surface);
+  border: var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.resched__label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.resched__fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 160px;
+  gap: 14px;
+  align-items: start;
+}
+
+.resched__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.resched__fieldlabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.resched .input {
+  font-size: 14px;
+}
+
+.input--locked,
+.input--locked:hover,
+.input--locked:focus {
+  background: var(--bg);
+  border-color: var(--rule);
+  color: var(--ink-muted);
+  cursor: not-allowed;
+}
+
+.resched__help {
+  margin: -4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+.resched__error {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--stamp);
+}
+
+.resched__error:empty {
+  display: none;
+}
+
+.resched__buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.resched__buttons .btn {
+  height: 40px;
+  font-size: 14px;
+}
+
+/* ---- Past table ------------------------------------------------------- */
+
+.table--past {
+  min-width: 0;
+}
+
+.table--past .mono {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-muted);
+}
+
+.table__slot {
+  font-family: var(--font-mono);
+}
+
+.table--past .col-status {
+  width: 1%;
+  text-align: right;
+}
+
+/* ---- Small screens ---------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .rstub__main {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "slot info"
+      "side side";
+    gap: 12px 18px;
+    padding: 16px 14px 16px 16px;
+    margin-left: 6px;
+  }
+
+  .rstub__slot { grid-area: slot; }
+  .rstub__info { grid-area: info; }
+
+  .rstub__side {
+    grid-area: side;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+  }
+
+  .rstub__note {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .resched {
+    margin: 0 12px 16px 18px;
+    padding: 16px;
+  }
+
+  .resched__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .table--past th:nth-child(3),
+  .table--past td:nth-child(3) {
+    display: none;
+  }
+}
+
+.table--past td:first-child {
+  white-space: nowrap;
+}

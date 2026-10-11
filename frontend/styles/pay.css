@@ -1,0 +1,200 @@
+/* Payment form: mini ticket summary + payment section. */
+
+.narrow {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 40px 16px 80px;
+}
+
+.narrow__rule {
+  margin: 28px 0;
+}
+
+/* ---- Mini ticket ------------------------------------------------------ */
+
+.mini {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  background: var(--surface);
+  border: var(--border);
+}
+
+.mini__stub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px dashed var(--ink-muted);
+}
+
+.mini__serial {
+  writing-mode: vertical-rl;
+  text-orientation: sideways;
+  transform: rotate(180deg);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.mini__spec {
+  margin: 0;
+  padding: 6px 18px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+}
+
+.mini__spec > div {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px dotted var(--rule);
+}
+
+.mini__spec > div:last-child {
+  border-bottom: 0;
+}
+
+.mini__spec dt {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  line-height: 19px;
+}
+
+.mini__spec dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---- Amount ----------------------------------------------------------- */
+
+.due {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  margin: 4px 0 28px;
+}
+
+.due__label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.due__amount {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+
+/* ---- Form ------------------------------------------------------------- */
+
+.payform {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.payform__block {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.payform__block[hidden] {
+  display: none;
+}
+
+.payform__label {
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.payform__optional {
+  margin-left: 6px;
+  color: var(--ink-muted);
+  letter-spacing: 0.06em;
+  text-transform: none;
+}
+
+.payform__hint {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+.payform .chip {
+  height: 40px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.cardrow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px 72px;
+  gap: 8px;
+}
+
+.cardrow > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.payform__error {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--stamp);
+}
+
+.payform__error:empty {
+  display: none;
+}
+
+.payform__cancel {
+  margin: -4px 0 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .cardrow {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .cardrow__number {
+    grid-column: 1 / -1;
+  }
+
+  .due__amount {
+    font-size: 34px;
+  }
+
+  .payform .chip {
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+}
