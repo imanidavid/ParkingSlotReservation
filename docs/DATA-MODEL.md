@@ -5,10 +5,10 @@ conceptual domain, then the entity model, then the physical schema as it actuall
 exists on disk — PostgreSQL for the relational core, MongoDB for the two
 append-only document collections.
 
-The class diagram in the Phase 1 document still holds for the five core entities
-and their relationships. What it doesn't show is everything the implementation
-added afterwards — `hold_until`, the check-in timestamps, facility rates and
-codes — so treat §3 here as the current truth.
+Two diagrams go with it: [`conceptual-er.png`](conceptual-er.png) for §1–2 and
+[`physical-schema.png`](physical-schema.png) for §3–3b. Both are drawn from the
+running system, so they supersede the Phase 1 class diagram, which predates
+`hold_until`, the check-in timestamps, facility rates and codes.
 
 ---
 
@@ -65,6 +65,9 @@ Payment (`1 : 1`).
 
 ## 2. Entity model
 
+![Conceptual ER diagram: Facility, ParkingSlot, User, Reservation and Payment with
+crow's-foot cardinalities](conceptual-er.png)
+
 | Entity | Identity | Key attributes |
 |---|---|---|
 | Facility | `facilityId` | `code`, `name`, `address`, `city`, `type`, `rate`, `levels`, `active` |
@@ -89,7 +92,14 @@ stays readable after the thing it points at is gone.
 
 ## 3. Physical schema (PostgreSQL 16)
 
-Taken from the running database, not from the annotations.
+Taken from the running database, not from the annotations. The diagram below
+covers both halves — the five PostgreSQL tables with their keys, foreign keys,
+checks and indexes, and the two MongoDB collections of §3b, drawn apart from the
+tables because nothing joins them.
+
+![Physical schema: five PostgreSQL tables with primary keys, foreign keys, column
+types and constraints, plus the audit_events and notifications MongoDB
+collections](physical-schema.png)
 
 ### `facilities`
 
