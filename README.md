@@ -6,9 +6,10 @@ and run the live board for their facility; admins manage facilities, slots,
 reservations and revenue.
 
 ```
-frontend/   pages (HTML), styles/, scripts/ — plain HTML/CSS/JS, no build step
+frontend/   React 19 + Vite. src/ (pages, components, lib), styles/, and ten
+            HTML entry shells — one per page, so each keeps its own URL
 backend/    Spring Boot 4; PostgreSQL (core data), MongoDB (audit/notification
-            documents), RabbitMQ (events); serves frontend/ and /api
+            documents), RabbitMQ (events); serves frontend/dist/ and /api
 docs/       the written documentation (see below), screens/ the responsive
             screenshots at four viewport widths
 tests/      end-to-end browser tests and the responsive check (headless Chrome)
@@ -57,15 +58,17 @@ Everything below is for running it directly on your machine instead.
 
 ## Requirements
 
+- Node 18+ (22 tested) — the frontend is React, so it has to be built before the backend can serve it
 - Java 17+ (21 tested), PostgreSQL 14+ (16 tested) with the `btree_gist` extension available (standard in PostgreSQL)
 - RabbitMQ 3.9+ for notification events — **optional**: set `NOTIFICATIONS=false` to run without it
 - MongoDB 6+ for the audit and notification log — **optional**: set `AUDIT=false` to run without it
 - Maven is optional (`backend/mvnw` downloads it)
-- For the browser tests: Node 18+ and Chrome or Chromium
+- For the browser tests: Chrome or Chromium
 
 ## Set up (once)
 
 ```
+npm install
 PGPASSWORD=3002 psql -h localhost -U postgres -c "CREATE DATABASE karita"
 PGPASSWORD=3002 psql -h localhost -U postgres -c "CREATE DATABASE karita_test"
 ```
@@ -80,7 +83,7 @@ seeds demo data (24 Kigali facilities, 1,476 slots, demo accounts, and about
 ## Run
 
 ```
-npm start            # or: cd backend && ./mvnw spring-boot:run
+npm start            # builds the frontend, then starts the backend
 ```
 
 Without RabbitMQ or MongoDB running, start it as:
@@ -91,6 +94,20 @@ NOTIFICATIONS=false AUDIT=false npm start
 
 Open **http://localhost:8080**. Data lives in PostgreSQL, so it survives restarts;
 a restart only ends sessions (pages send you to sign-in with a "session ended" note).
+
+`npm start` is `npm run build && cd backend && ./mvnw spring-boot:run`. If the
+backend is already running, `npm run build` on its own is enough to pick up a
+frontend change — the pages are static files, so there's nothing to restart.
+
+### Working on the frontend
+
+```
+npm run dev          # Vite on :5173 with hot reload, API proxied to :8080
+```
+
+Run the backend separately (`cd backend && ./mvnw spring-boot:run`). The dev
+server forwards `/api`, `/logout` and the OAuth2 round-trip to it, so sessions
+and sign-in work from the dev origin too.
 
 To start over with fresh demo data: `DROP DATABASE karita; CREATE DATABASE karita;`.
 
@@ -130,7 +147,8 @@ attendant records it, card `4000 0000 0000 0002` always declines.
 
 ```
 npm run test:backend   # 29 tests: 14 API + 4 messaging + 5 operations log + 6 OAuth2
-npm test               # 14 browser checks: builds the jar, runs it on karita_test
+npm test               # 14 browser checks: builds the frontend and the jar,
+                       # runs it on karita_test
 npm run test:all
 npm run screens        # all 10 pages at 4 widths: screenshots + overflow check
 ```
@@ -156,7 +174,10 @@ every facility has closed for the night. Normal runs leave the clock alone.
 ## How the two halves talk
 
 - **Contract:** `docs/API.md`. Every front-end call goes through `api()` in
-  `frontend/scripts/karita.js`.
+  `frontend/src/lib/api.js`.
+- **Pages:** React 19 built by Vite, one entry per page, so `/admin.html` and
+  friends keep the URLs the server authorises. See `docs/ARCHITECTURE.md §8`
+  for why this isn't a single-page app.
 - **Sessions:** server-side `HttpSession`, cookie `KARITA_SESSION` (HttpOnly,
   SameSite=Lax), 8-hour timeout, new session id at sign-in.
 - **Sign-in:** password (PBKDF2, 210k iterations) or Google via OAuth2/OIDC with
@@ -201,3 +222,4 @@ every facility has closed for the night. Normal runs leave the clock alone.
 
 Entities follow §10.1: `Facility`, `ParkingSlot`, `User`, `Reservation`,
 `Payment` in `backend/src/main/java/auca/ac/rw/parkinkslotManagement/model`.
+Each screen above is a component under `frontend/src/pages/`.
