@@ -1,0 +1,37 @@
+/* Rules only the registration page uses (was the inline <style> in register.html). */
+
+.auth__panel--wide {
+  max-width: 460px;
+}
+
+.register__vehicle .chips {
+  grid-auto-flow: column;
+}
+
+.register__vehicle .chip {
+  height: 38px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.field__hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-muted);
+}
+
+.input--plate {
+  text-transform: uppercase;
+}
+
+.register__fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.register__legend {
+  padding: 0;
+  margin-bottom: 6px;
+}

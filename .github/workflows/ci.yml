@@ -76,6 +76,12 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: "22"
+          cache: npm
+
+      # React + Vite. `npm test` builds the bundle before it drives the
+      # browser, so this is the only install the frontend needs.
+      - name: Install frontend dependencies
+        run: npm ci
 
       # The 29 backend tests: 14 API + 4 RabbitMQ messaging + 6 OAuth2 +
       # 5 MongoDB operations log. The messaging and operations-log groups skip
@@ -97,7 +103,8 @@ jobs:
           fi
 
       # ubuntu-latest ships Chrome, which is what tests/smoke.mjs drives over the
-      # DevTools protocol. It builds its own jar and runs it on karita_test.
+      # DevTools protocol. It builds the React bundle and its own jar, then runs
+      # the jar on karita_test.
       - name: Browser end-to-end tests
         run: npm test
 

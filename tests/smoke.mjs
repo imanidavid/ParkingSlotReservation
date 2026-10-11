@@ -126,8 +126,19 @@ const send = (method, params = {}) =>
     ws.send(JSON.stringify({ id: i, method, params }));
   });
 
+/**
+ * Evaluate an expression in the page and bring the result back.
+ *
+ * Elements can't come back by value: React hangs a fiber off every DOM node it
+ * renders, and the serializer gives up walking it ("Object reference chain is
+ * too long"). Every check in this file only asks whether an element is there,
+ * so a node is handed back as `true` and every other kind of result is left
+ * exactly as it was.
+ */
 async function js(expr) {
-  const res = await send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true });
+  const wrapped = `(() => { const v = (${expr}); return v instanceof Node ? true : v; })()`;
+  const res = await send("Runtime.evaluate", { expression: wrapped, awaitPromise: true, returnByValue: true });
+  if (res.error) throw new Error(`page error in: ${expr}\n${res.error.message}`);
   if (res.result?.exceptionDetails) throw new Error(`page error in: ${expr}\n${res.result.exceptionDetails.exception?.description}`);
   return res.result?.result?.value;
 }
@@ -183,10 +194,35 @@ async function open(path, ready = "document.readyState === 'complete'") {
 }
 
 const q = (sel) => `document.querySelector(${JSON.stringify(sel)})`;
+
+/**
+ * Set a form control's value the way a person would, not the way a script
+ * would. React installs its own `value` setter on every controlled input to
+ * track what it last rendered; assigning `el.value = x` goes through that
+ * setter, so by the time the input event fires React believes nothing changed
+ * and drops it. Going through the *prototype's* setter leaves the tracker
+ * stale, which is exactly what tells React a real edit happened. This is the
+ * same trick React's own testing library uses.
+ */
+const SET_NATIVE = `((el, prop, value) => {
+  const d = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), prop);
+  if (d && d.set) d.set.call(el, value); else el[prop] = value;
+})`;
 const text = (sel) => js(`${q(sel)}?.textContent.trim()`);
 const click = (sel) => js(`${q(sel)}.click()`);
+const pick = (sel, value) =>
+  js(`(() => {
+    const s = ${q(sel)};
+    ${SET_NATIVE}(s, "value", ${JSON.stringify(value)});
+    s.dispatchEvent(new Event("change", { bubbles: true }));
+  })()`);
+
 const type = (sel, value) =>
-  js(`(() => { const i = ${q(sel)}; i.value = ${JSON.stringify(value)}; i.dispatchEvent(new Event("input", { bubbles: true })); })()`);
+  js(`(() => {
+    const i = ${q(sel)};
+    ${SET_NATIVE}(i, "value", ${JSON.stringify(value)});
+    i.dispatchEvent(new Event("input", { bubbles: true }));
+  })()`);
 
 async function signIn(email, password = "karita123") {
   await js(`fetch("/logout")`);
@@ -306,7 +342,8 @@ await test("driver: reschedule shows field errors, cancel works inline", async (
   await open("/reservations.html", q(".js-reschedule"));
   await click(".js-reschedule");
   await waitFor(q("[id^=end-]"), "reschedule panel");
-  await js(`(() => { const i = ${q("[id^=end-]")}; i.value = i.value.slice(0, 11) + "23:00"; })()`);
+  const endValue = await js(`${q("[id^=end-]")}.value`);
+  await type("[id^=end-]", endValue.slice(0, 11) + "23:00");
   await click(".resched button[type=submit]");
   await waitFor(`${q(".resched .field__error:not(:empty)")}?.textContent.includes("closes")`, "closing-time error");
   const before = await js(`document.querySelectorAll(".rstub").length`);
@@ -385,7 +422,7 @@ await test("admin: a facility with history can't be deleted", async () => {
 await test("admin: reservations list filters, revenue table totals", async () => {
   await js(`location.hash = "#reservations"`);
   await waitFor(`document.querySelectorAll("#reservations-body tr").length > 3`, "reservations listed");
-  await js(`(() => { const s = ${q("#res-status")}; s.value = "Cancelled"; s.dispatchEvent(new Event("change")); })()`);
+  await pick("#res-status", "Cancelled");
   await waitFor(`[...document.querySelectorAll("#reservations-body .pill")].every(p => p.textContent === "CANCELLED") && document.querySelectorAll("#reservations-body tr").length > 0`, "cancelled filter");
   await js(`location.hash = "#revenue"`);
   await waitFor(`${q("#revenue-foot th")}?.textContent === "All facilities"`, "totals row");
@@ -404,7 +441,7 @@ await test("robustness: server down shows the can't-reach banner", async () => {
   await signIn("driver@karita.rw");
   await open("/browse.html", q("#results-body tr"));
   await stopServer();
-  await js(`(() => { const r = document.querySelector("input[name=duration][value='2h']"); r.checked = true; r.dispatchEvent(new Event("change", { bubbles: true })); })()`);
+  await click(`input[name=duration][value="2h"]`);
   await waitFor(`${q(".offline")}?.textContent.includes("Can't reach")`, "offline banner");
 });
 

@@ -25,6 +25,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* React mounts here. display:contents keeps it out of the layout entirely, so
+   the header and main below it stay direct flex children of <body>. */
+#root {
+  display: contents;
+}
+
 .mono {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;

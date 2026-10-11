@@ -1,5 +1,6 @@
 # build output
 backend/target/
+frontend/dist/
 node_modules/
 *.class
 *.jar

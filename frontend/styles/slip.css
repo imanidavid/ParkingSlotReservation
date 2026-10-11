@@ -242,7 +242,8 @@
 }
 
 @media print {
-  body > :not(main),
+  body > :not(main, #root),
+  #root > :not(main),
   .slip-actions {
     display: none !important;
   }

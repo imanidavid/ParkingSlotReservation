@@ -194,7 +194,8 @@
     --stamp: #B22B1F;
   }
 
-  body > :not(main),
+  body > :not(main, #root),
+  #root > :not(main),
   main > :not(.print-target),
   .print-target .section-label,
   .print-target .no-print,

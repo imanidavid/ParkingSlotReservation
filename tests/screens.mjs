@@ -144,8 +144,19 @@ const send = (method, params = {}) =>
     ws.send(JSON.stringify({ id: i, method, params }));
   });
 
+/**
+ * Evaluate an expression in the page and bring the result back.
+ *
+ * Elements can't come back by value: React hangs a fiber off every DOM node it
+ * renders, and the serializer gives up walking it ("Object reference chain is
+ * too long"). Every check in this file only asks whether an element is there,
+ * so a node is handed back as `true` and every other kind of result is left
+ * exactly as it was.
+ */
 async function js(expr) {
-  const res = await send("Runtime.evaluate", { expression: expr, awaitPromise: true, returnByValue: true });
+  const wrapped = `(() => { const v = (${expr}); return v instanceof Node ? true : v; })()`;
+  const res = await send("Runtime.evaluate", { expression: wrapped, awaitPromise: true, returnByValue: true });
+  if (res.error) throw new Error(`page error in: ${expr}\n${res.error.message}`);
   if (res.result?.exceptionDetails) {
     throw new Error(`page error in: ${expr}\n${res.result.exceptionDetails.exception?.description}`);
   }
@@ -167,9 +178,27 @@ async function waitFor(expr, label, timeout = 15000) {
 
 let BASE;
 const q = (sel) => `document.querySelector(${JSON.stringify(sel)})`;
+
+/**
+ * Set a form control's value the way a person would, not the way a script
+ * would. React installs its own `value` setter on every controlled input to
+ * track what it last rendered; assigning `el.value = x` goes through that
+ * setter, so by the time the input event fires React believes nothing changed
+ * and drops it. Going through the *prototype's* setter leaves the tracker
+ * stale, which is exactly what tells React a real edit happened. This is the
+ * same trick React's own testing library uses.
+ */
+const SET_NATIVE = `((el, prop, value) => {
+  const d = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), prop);
+  if (d && d.set) d.set.call(el, value); else el[prop] = value;
+})`;
 const click = (sel) => js(`${q(sel)}.click()`);
 const type = (sel, value) =>
-  js(`(() => { const i = ${q(sel)}; i.value = ${JSON.stringify(value)}; i.dispatchEvent(new Event("input", { bubbles: true })); })()`);
+  js(`(() => {
+    const i = ${q(sel)};
+    ${SET_NATIVE}(i, "value", ${JSON.stringify(value)});
+    i.dispatchEvent(new Event("input", { bubbles: true }));
+  })()`);
 
 /**
  * The app is only fully reachable during opening hours (facilities close at

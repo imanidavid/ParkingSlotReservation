@@ -1,10 +1,24 @@
 # syntax=docker/dockerfile:1
 #
-# Two stages: Maven builds the jar, a JRE image runs it. The frontend ships in
-# the same image because the backend serves it as static files from the same
-# origin (see ARCHITECTURE.md §8) — there is no separate web server to deploy.
+# Three stages: Node builds the React bundle, Maven builds the jar, a JRE image
+# runs both. The frontend ships in the same image because the backend serves it
+# as static files from the same origin (see ARCHITECTURE.md §8) — there is no
+# separate web server to deploy.
 
-# ---- build ---------------------------------------------------------------------
+# ---- frontend ------------------------------------------------------------------
+FROM node:22-alpine AS web
+WORKDIR /web
+
+# Lockfile first, same reason as the pom below: the dependency layer is cached
+# until the lockfile itself changes.
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY vite.config.js ./
+COPY frontend ./frontend
+RUN npm run build
+
+# ---- backend -------------------------------------------------------------------
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /src
 
@@ -30,10 +44,11 @@ RUN useradd --system --create-home --uid 10001 karita
 WORKDIR /app
 
 COPY --from=build /app.jar /app/app.jar
-COPY --chown=karita:karita frontend /app/frontend
+COPY --from=web --chown=karita:karita /web/frontend/dist /app/frontend
 
 # The app resolves karita.frontend-dir relative to its working directory, which
-# is ../frontend when run from backend/ in a checkout. In the image it's absolute.
+# is ../frontend/dist when run from backend/ in a checkout. In the image the
+# built bundle is copied to one absolute path instead.
 ENV FRONTEND_DIR=/app/frontend \
     PORT=8080 \
     JAVA_OPTS="-XX:MaxRAMPercentage=75"
