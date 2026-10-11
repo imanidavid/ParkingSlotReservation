@@ -20,6 +20,7 @@ tests/      end-to-end browser tests and the responsive check (headless Chrome)
 | File | What's in it |
 |---|---|
 | [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) | Problem, users, objectives, scope, three user stories with acceptance criteria, measurable quality targets |
+| `docs/Karita_Part1_Requirements.docx` | The same thing as one Word document, with the BR1–BR14 table — the submission copy for part 1 |
 | [`docs/DATA-MODEL.md`](docs/DATA-MODEL.md) | Conceptual domain, entity model, and the physical PostgreSQL schema with keys, indexes and constraints |
 | [`docs/conceptual-er.png`](docs/conceptual-er.png) | ER diagram of the five core entities and their cardinalities |
 | [`docs/physical-schema.png`](docs/physical-schema.png) | Physical schema: tables, keys, constraints and indexes, plus the two MongoDB collections |
